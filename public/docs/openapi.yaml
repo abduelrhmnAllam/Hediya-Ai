@@ -1,0 +1,283 @@
+openapi: 3.0.3
+info:
+  title: Laravel
+  description: ''
+  version: 1.0.0
+servers:
+  -
+    url: 'http://localhost'
+paths:
+  /api/register:
+    post:
+      summary: 'Handle user registration.'
+      operationId: handleUserRegistration
+      description: ''
+      parameters: []
+      responses: {  }
+      tags:
+        - Endpoints
+      security: []
+  /api/login:
+    post:
+      summary: ''
+      operationId: postApiLogin
+      description: ''
+      parameters: []
+      responses: {  }
+      tags:
+        - Endpoints
+      security: []
+  /api/logout:
+    post:
+      summary: ''
+      operationId: postApiLogout
+      description: ''
+      parameters: []
+      responses: {  }
+      tags:
+        - Endpoints
+      security: []
+  /api/users:
+    get:
+      summary: 'Display a listing of the resource.'
+      operationId: displayAListingOfTheResource
+      description: 'GET /api/users'
+      parameters: []
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthorized
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized
+      tags:
+        - Endpoints
+      security: []
+    post:
+      summary: 'Store a newly created resource in storage.'
+      operationId: storeANewlyCreatedResourceInStorage
+      description: 'POST /api/users'
+      parameters: []
+      responses: {  }
+      tags:
+        - Endpoints
+      security: []
+  '/api/users/{id}':
+    get:
+      summary: 'Display the specified resource.'
+      operationId: displayTheSpecifiedResource
+      description: 'GET /api/users/{id}'
+      parameters: []
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthorized
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized
+      tags:
+        - Endpoints
+      security: []
+    put:
+      summary: 'Update the specified resource in storage.'
+      operationId: updateTheSpecifiedResourceInStorage
+      description: 'PUT /api/users/{id}'
+      parameters: []
+      responses: {  }
+      tags:
+        - Endpoints
+      security: []
+    delete:
+      summary: 'Remove the specified resource from storage.'
+      operationId: removeTheSpecifiedResourceFromStorage
+      description: 'DELETE /api/users/{id}'
+      parameters: []
+      responses: {  }
+      tags:
+        - Endpoints
+      security: []
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the user.'
+        example: omnis
+        required: true
+        schema:
+          type: string
+  /api/projects:
+    get:
+      summary: "GET /api/projects\nList all projects with dynamic attributes."
+      operationId: gETapiprojectsListAllProjectsWithDynamicAttributes
+      description: ''
+      parameters: []
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthorized
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized
+      tags:
+        - Endpoints
+      security: []
+    post:
+      summary: "POST /api/projects\nCreate a new project (and store any dynamic attributes if provided)."
+      operationId: pOSTapiprojectsCreateANewProjectandStoreAnyDynamicAttributesIfProvided
+      description: ''
+      parameters: []
+      responses: {  }
+      tags:
+        - Endpoints
+      security: []
+  '/api/projects/{id}':
+    get:
+      summary: "GET /api/projects/{project}\nShow a specific project with its dynamic attributes."
+      operationId: gETapiprojectsprojectShowASpecificProjectWithItsDynamicAttributes
+      description: ''
+      parameters: []
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthorized
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized
+      tags:
+        - Endpoints
+      security: []
+    put:
+      summary: "PUT /api/projects/{project}\nUpdate an existing project and its dynamic attributes."
+      operationId: pUTapiprojectsprojectUpdateAnExistingProjectAndItsDynamicAttributes
+      description: ''
+      parameters: []
+      responses: {  }
+      tags:
+        - Endpoints
+      security: []
+    delete:
+      summary: "DELETE /api/projects/{project}\nDelete a project (and optionally its dynamic attributes via cascading)."
+      operationId: dELETEapiprojectsprojectDeleteAProjectandOptionallyItsDynamicAttributesViaCascading
+      description: ''
+      parameters: []
+      responses: {  }
+      tags:
+        - Endpoints
+      security: []
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the project.'
+        example: officiis
+        required: true
+        schema:
+          type: string
+  /api/timesheets:
+    get:
+      summary: 'Display a listing of timesheets.'
+      operationId: displayAListingOfTimesheets
+      description: 'GET /api/timesheets'
+      parameters: []
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthorized
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized
+      tags:
+        - Endpoints
+      security: []
+    post:
+      summary: 'Store a newly created timesheet in storage.'
+      operationId: storeANewlyCreatedTimesheetInStorage
+      description: 'POST /api/timesheets'
+      parameters: []
+      responses: {  }
+      tags:
+        - Endpoints
+      security: []
+  '/api/timesheets/{id}':
+    get:
+      summary: 'Display the specified timesheet.'
+      operationId: displayTheSpecifiedTimesheet
+      description: 'GET /api/timesheets/{id}'
+      parameters: []
+      responses:
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthorized
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized
+      tags:
+        - Endpoints
+      security: []
+    put:
+      summary: 'Update the specified timesheet in storage.'
+      operationId: updateTheSpecifiedTimesheetInStorage
+      description: 'PUT /api/timesheets/{id}'
+      parameters: []
+      responses: {  }
+      tags:
+        - Endpoints
+      security: []
+    delete:
+      summary: 'Remove the specified timesheet from storage.'
+      operationId: removeTheSpecifiedTimesheetFromStorage
+      description: 'DELETE /api/timesheets/{id}'
+      parameters: []
+      responses: {  }
+      tags:
+        - Endpoints
+      security: []
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the timesheet.'
+        example: vel
+        required: true
+        schema:
+          type: string
+tags:
+  -
+    name: Endpoints
+    description: ''
