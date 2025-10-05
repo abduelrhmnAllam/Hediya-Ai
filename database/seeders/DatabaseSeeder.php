@@ -10,15 +10,15 @@ class DatabaseSeeder extends Seeder
     {
         // Call your individual seeders
         $this->call([
+            ProductsTableSeeder::class,
             UserSeeder::class,
-                   RelativesTableSeeder::class,
-            InterestsTableSeeder::class,
-            ProjectSeeder::class,
-            TimesheetSeeder::class,
+             RelativesTableSeeder::class,
+             InterestsTableSeeder::class,
             AttributeSeeder::class,
             AttributeValueSeeder::class,
-                 RelativesTableSeeder::class,
-            InterestsTableSeeder::class,
+            ProjectSeeder::class,
+            TimesheetSeeder::class,
+
         ]);
     }
 }
