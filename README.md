@@ -1,32 +1,5 @@
 
 
-# Laravel 12.0 Boilerplate | Laravel Passport
-
-This is a Laravel 12 API project that that I have developed for attribute value extraction functionality :
-
-- Kindly go though complete document
-
-
-- Core Models & Relations:
-    - **User:** first_name, last_name, email, password
-    - **Project:** name, status
-    - **Timesheet:** task_name, date, hours
-    - Many-to-many relation between Users and Projects; one-to-many for Timesheets.
-- Dynamic Attributes (EAV) for Projects:
-    - **Attribute:** name, type (text, date, number, select)
-    - **AttributeValue:** attribute_id, entity_id, value
-- API Endpoints with Laravel Passport for authentication.
-- Flexible filtering on both regular and dynamic EAV attributes.
-- Pagination and ordering for listing endpoints.
-
-## Setup Instructions
-
-1. **Clone the Repository**
-   ```
-   git@github.com:srafiqdotcom/Laravel-Passport-Boilerplate.git
-   cd Laravel-Passport-Boilerplate
-
-
 ### Install Dependencies
 
 
