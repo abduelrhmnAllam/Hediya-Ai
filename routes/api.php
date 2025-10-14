@@ -8,8 +8,14 @@ use App\Http\Controllers\V1\TimesheetController;
 use App\Http\Controllers\V1\PeopleController;
 use App\Http\Controllers\V1\OccasionController;
 use App\Http\Controllers\V1\OpenaiController;
+use App\Http\Controllers\V1\ProductController;
 use Illuminate\Http\Request;
 Route::middleware('throttle:api')->group(function () {
+
+
+
+Route::get('/products', [ProductController::class, 'index']);
+Route::get('/products/{id}', [ProductController::class, 'show']);
 
 // Public (no auth)
     Route::post('register', [AuthController::class, 'register']);
