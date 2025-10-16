@@ -16,10 +16,7 @@ class Category extends Model
         'parent_id',
     ];
 
-    /**
-     * 🔗 العلاقة بين الفئات والأبناء (Tree)
-     */
-    public function parent()
+   public function parent()
     {
         return $this->belongsTo(Category::class, 'parent_id');
     }
@@ -29,9 +26,6 @@ class Category extends Model
         return $this->hasMany(Category::class, 'parent_id');
     }
 
-    /**
-     * 🔗 العلاقة مع المنتجات
-     */
     public function products()
     {
         return $this->hasMany(Product::class, 'category_id');

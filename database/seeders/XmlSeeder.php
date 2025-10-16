@@ -61,22 +61,26 @@ class XmlSeeder extends Seeder
             $category = Category::where('external_id', (string) $prod->categoryId)->first();
 
             Product::updateOrCreate(
-                ['external_id' => (string) $prod['id']],
-                [
-                    'available'          => ((string) $prod['available'] === 'true'),
-                    'category_id'        => $category?->id,
-                    'currency_id'        => (string) $prod->currencyId,
-                    'name'               => (string) $prod->name,
-                    'description'        => (string) $prod->description,
-                    'price'              => (float) $prod->price,
-                    'old_price'          => (float) $prod->oldprice,
-                    'vendor'             => (string) $prod->vendor,
-                    'url'                => (string) $prod->url,
-                    'pictures'           => json_encode($pictures, JSON_UNESCAPED_UNICODE),
-                    'identifier_exists'  => (string) $prod->identifier_exists,
-                    'modified_time'      => (int) $prod->modified_time,
-                ]
-            );
+    ['external_id' => (string) $prod['id']],
+    [
+        'available'          => ((string) $prod['available'] === 'true'),
+        'category_id'        => $category?->id,
+        'currency_id'        => (string) $prod->currencyId,
+        'name'               => (string) $prod->name,
+        'description'        => (string) $prod->description,
+
+        // ✅ تنظيف السعر قبل التخزين
+        'price'              => (float) str_replace(',', '', (string) $prod->price),
+        'old_price'          => (float) str_replace(',', '', (string) $prod->oldprice),
+
+        'vendor'             => (string) $prod->vendor,
+        'url'                => (string) $prod->url,
+        'pictures'           => json_encode($pictures, JSON_UNESCAPED_UNICODE),
+        'identifier_exists'  => (string) $prod->identifier_exists,
+        'modified_time'      => (int) $prod->modified_time,
+    ]
+);
+
         }
 
         $this->command->info('✅ تم استيراد المنتجات بنجاح.');
