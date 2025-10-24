@@ -25,6 +25,22 @@ Route::get('/products/{id}', [ProductController::class, 'show']);
     Route::post('/search', [OpenaiController::class, 'search']);
     Route::post('/advanced-search', [OpenaiController::class, 'advancedSearch']);
 
+Route::prefix('auth')->group(function () {
+    Route::post('check-email', [AuthController::class, 'checkEmail']);      // مرحلة 1
+    Route::post('verify-pin', [AuthController::class, 'verifyPin']);        // مرحلة 2
+    Route::post('resend-pin', [AuthController::class, 'resendPin']);
+
+    Route::post('complete-register', [AuthController::class, 'completeRegister']); // مرحلة 3
+    Route::post('submit-password', [AuthController::class, 'submitPassword']); // login by password
+    Route::post('login', [AuthController::class, 'login']); // يمكنك الاحتفاظ بالـ login الحالي
+    Route::middleware('auth:api')->post('logout', [AuthController::class, 'logout']);
+
+    Route::get('google/redirect', [AuthController::class, 'redirectToGoogle']);
+Route::get('google/callback', [AuthController::class, 'handleGoogleCallback']);
+
+});
+
+
 // Protected (with Passport Token JWT)
     Route::middleware('auth:api')->group(function () {
 

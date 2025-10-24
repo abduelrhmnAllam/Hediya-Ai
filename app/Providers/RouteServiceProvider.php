@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Providers;
 
 use Illuminate\Support\Facades\Route;
@@ -14,43 +15,30 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        parent::boot();
-    }
-
-    /**
-     * Define the routes for the application.
-     */
-    public function map(): void
-    {
+        // أول حاجة نضبط الـ rate limiting
         $this->configureRateLimiting();
 
-        // Register API routes
-        $this->mapApiRoutes();
+        // بعد كده نعرّف الـ routes بتاعة المشروع
+        $this->routes(function () {
+            // API routes
+            Route::middleware('api')
+                ->prefix('api')
+                ->group(base_path('routes/api.php'));
 
-        // Register web routes
-        $this->mapWebRoutes();
-    }
-
-    protected function mapApiRoutes(): void
-    {
-        Route::prefix('api')
-            ->namespace($this->namespace)
-            ->group(base_path('routes/api.php'));
-    }
-
-    protected function mapWebRoutes(): void
-    {
-        Route::middleware('web')
-            ->namespace($this->namespace)
-            ->group(base_path('routes/web.php'));
-    }
-    protected function configureRateLimiting()
-    {
-        RateLimiter::for('api', function (Request $request) {
-            // Here we are allowing 60 requests per minute per user or IP address.
-            return Limit::perMinute(60)->by(optional($request->user())->id ?: $request->ip());
+            // Web routes
+            Route::middleware('web')
+                ->group(base_path('routes/web.php'));
         });
     }
 
-
+    /**
+     * Configure the rate limiters for the application.
+     */
+    protected function configureRateLimiting(): void
+    {
+        RateLimiter::for('api', function (Request $request) {
+            // السماح بـ 60 طلب في الدقيقة لكل مستخدم أو IP
+            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
+        });
+    }
 }
