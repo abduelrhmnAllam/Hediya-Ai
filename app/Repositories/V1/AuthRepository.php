@@ -128,9 +128,10 @@ public function resendVerificationCode(array $data)
 }
 
 
-public function completeRegistration(array $data)
+   public function completeRegistration(array $data)
 {
     try {
+        // البحث عن المستخدم
         $user = $this->model::where('email', $data['email'])->first();
 
         if (!$user) {
@@ -141,26 +142,30 @@ public function completeRegistration(array $data)
             return ResponseHandler::error('Email not verified. Please verify first.', 403);
         }
 
-        // update profile and password
+        // تحديث بيانات المستخدم
         $user->update([
-            'name' => $data['first_name'].' '.$data['last_name'],
+            'name' => trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? '')),
             'password' => Hash::make($data['password']),
+            'mobile' => $data['mobile'] ?? null,
+            'address' => $data['address'] ?? null,
         ]);
 
-        // create access token
+        // إنشاء توكن الدخول
         $token = $user->createToken('authToken')->accessToken;
 
         $dataToReturn = [
             'token' => $token,
-            'user' => $user,
+            'user' => $user->only(['id', 'name', 'email', 'mobile', 'address', 'is_verified', 'created_at']),
         ];
 
-        return ResponseHandler::success($dataToReturn, __('common.success'));
+        return ResponseHandler::success($dataToReturn, 'Registration completed successfully.');
     } catch (\Exception $e) {
         $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
         return ResponseHandler::error($this->prepareExceptionLog($e), 500, 14);
     }
 }
+
+
 
 public function submitPasswordLogin(array $data)
 {

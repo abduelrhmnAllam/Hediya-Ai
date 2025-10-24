@@ -2,127 +2,100 @@
 
 namespace App\Http\Controllers\V1;
 
-use App\Http\Controllers\Controller as Controller;
-use App\Models\User;
+use App\Http\Controllers\Controller;
+use App\Repositories\V1\UserRepository;
 use App\Utilities\ResponseHandler;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
-use App\Repositories\V1\UserRepository;
-use stdClass;
 
 class UserController extends Controller
 {
     protected UserRepository $userRepository;
 
-    /**
-     * AuthController constructor.
-     *
-     * @param UserRepository $userRepository
-     * @param Request $request
-     */
     public function __construct(UserRepository $userRepository, Request $request)
     {
         parent::__construct($request);
         $this->userRepository = $userRepository;
     }
-    /**
-     * Display a listing of the resource.
-     * GET /api/users
-     */
+
+    /** ==================== GET /api/users ==================== */
     public function index(Request $request)
     {
-        $rules = [
-            'filters'                => 'sometimes|array',
+        $validated = $this->validated([
+            'filters' => 'sometimes|array',
+            'filters.name' => 'sometimes|string',
+            'filters.email' => 'sometimes|string',
+            'order_by' => 'sometimes|in:id,name,email,created_at',
+            'order' => 'sometimes|in:asc,desc',
+            'rpp' => 'sometimes|integer|min:1',
+            'page' => 'sometimes|integer|min:1',
+        ], $request->all());
 
-            'filters.name'           => 'sometimes',
-            'filters.name.like'      => 'sometimes|string',
-            'filters.name.='         => 'sometimes|string',
-
-            'filters.email'          => 'sometimes|string',
-            'filters.email.like'     => 'sometimes|string',
-            'filters.email.='        => 'sometimes|string',
-
-            'order_by'               => 'sometimes|in:first_name,last_name,email,id',
-            'order'                  => 'sometimes|in:asc,desc',
-
-            'rpp'                    => 'sometimes|integer|min:1',
-            'page'                => 'sometimes|integer|min:1',
-        ];
-
-        $validated = $this->validated($rules, $request->all());
         if ($validated->fails()) {
             return ResponseHandler::error(__('common.errors.validation'), 422, 2001, $validated->errors());
         }
+
         return $this->userRepository->userListing($request);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     * POST /api/users
-     */
+    /** ==================== POST /api/users ==================== */
     public function store(Request $request)
     {
-        $rules = [
-            'first_name' => 'sometimes|required|regex:/^\\S+$/',
-            'last_name'  => 'sometimes|required|regex:/^\\S+$/',
+        $validated = $this->validated([
+            'first_name' => 'required|string|max:100',
+            'last_name'  => 'required|string|max:100',
             'email'      => 'required|email|unique:users,email',
             'password'   => 'required|min:6',
-        ];
+            'mobile'     => 'nullable|string|max:20',
+            'address'    => 'nullable|string|max:255',
+        ], $request->all());
 
-        $validated = $this->validated($rules, $request->all());
         if ($validated->fails()) {
             return ResponseHandler::error(__('common.errors.validation'), 422, 2001, $validated->errors());
         }
-        $validatedData = $validated->validated();
-        // Hash the password before db interpretation
-        $validatedData['password'] = Hash::make($validatedData['password']);
 
-        return $this->userRepository->createUser($validatedData);
+        $data = $validated->validated();
+        $data['password'] = Hash::make($data['password']);
+
+        return $this->userRepository->createUser($data);
     }
 
-    /**
-     * Display the specified resource.
-     * GET /api/users/{id}
-     */
+    /** ==================== GET /api/users/{id} ==================== */
     public function show($id, Request $request)
     {
+        $validated = $this->validated([
+            'id' => 'required|integer|exists:users,id',
+        ], ['id' => $id]);
 
-        $request->merge(['id' => $id]);
-        $rules = [
-            'id'       => 'required|integer|exists:users,id',
-        ];
-
-        $validated = $this->validated($rules, $request->all());
         if ($validated->fails()) {
             return ResponseHandler::error(__('common.errors.validation'), 422, 3011, $validated->errors());
         }
+
         return $this->userRepository->showUser($validated->validated());
     }
 
-    /**
-     * Update the specified resource in storage.
-     * PUT /api/users/{id}
-     */
+    /** ==================== PUT /api/users/{id} ==================== */
     public function update(Request $request, string $id)
     {
-        $request->merge(['id' => $id]);
+        $data = $request->merge(['id' => $id])->all();
 
-        $rules = [
+        $validated = $this->validated([
             'id' => 'required|integer|exists:users,id',
-            'first_name' => 'sometimes|required|regex:/^\\S+$/',
-            'last_name'  => 'sometimes|required|regex:/^\\S+$/',
-            'email'      => 'sometimes|required|email|unique:users,email,' . $request->input('id'),
-            'password'   => 'sometimes|required|min:6',
-        ];
+            'first_name' => 'sometimes|string|max:100',
+            'last_name'  => 'sometimes|string|max:100',
+            'email'      => 'sometimes|email|unique:users,email,' . $id,
+            'password'   => 'sometimes|min:6',
+            'mobile'     => 'nullable|string|max:20',
+            'address'    => 'nullable|string|max:255',
+            'is_verified' => 'sometimes|boolean',
+        ], $data);
 
-        $validated = $this->validated($rules, $request->all());
         if ($validated->fails()) {
             return ResponseHandler::error(__('common.errors.validation'), 422, 3001, $validated->errors());
         }
 
         $validatedData = $validated->validated();
-        // Hash the password before db interpretation
+
         if (isset($validatedData['password'])) {
             $validatedData['password'] = Hash::make($validatedData['password']);
         }
@@ -130,22 +103,17 @@ class UserController extends Controller
         return $this->userRepository->updateUser($validatedData);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     * DELETE /api/users/{id}
-     */
-    public function destroy(string $id, Request $request)
+    /** ==================== DELETE /api/users/{id} ==================== */
+    public function destroy(string $id)
     {
-        $request->merge(['id' => $id]);
-        $rules = [
-            'id'       => 'required|integer|exists:users,id',
-        ];
+        $validated = $this->validated([
+            'id' => 'required|integer|exists:users,id',
+        ], ['id' => $id]);
 
-        $validated = $this->validated($rules, $request->all());
         if ($validated->fails()) {
             return ResponseHandler::error(__('common.errors.validation'), 422, 3011, $validated->errors());
         }
-        return $this->userRepository->deleteUser($validated->validated());
 
+        return $this->userRepository->deleteUser($validated->validated());
     }
 }
