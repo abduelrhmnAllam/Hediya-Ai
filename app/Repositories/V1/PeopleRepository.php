@@ -18,33 +18,45 @@ class PeopleRepository extends BaseRepository
         $this->logChannel = 'persons_logs';
     }
 
-    public function personListing($request)
-    {
-        try {
-            $query = $this->model::with(['relative', 'interests']);
+   public function personListing($request)
+{
+    try {
+        $query = $this->model::with(['relative', 'interests', 'occasions.occasionName']);
 
-            $allowedColumns = ['name','gender','city'];
+        // 🧩 الأعمدة المسموح بالفلترة والترتيب عليها
+        $allowedColumns = ['name', 'gender', 'city'];
 
-            $filters = $request->input('filters', []);
-            if (!empty($filters)) {
-                $query = FilterHelper::applyFilters($query, $filters, $allowedColumns);
-            }
-
-            $orderBy = $request->input('order_by', null);
-            $order   = $request->input('order', 'asc');
-            if ($orderBy && in_array($orderBy, $allowedColumns)) {
-                $query->orderBy($orderBy, $order);
-            }
-
-            $rpp = $request->input('rpp', 10);
-            $persons = $query->paginate($rpp);
-
-            return ResponseHandler::success($persons, __('common.success'));
-        } catch (\Exception $e) {
-            $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
-            return ResponseHandler::error($this->prepareExceptionLog($e), 500, 24);
+        // ✅ تطبيق الفلاتر
+        $filters = $request->input('filters', []);
+        if (!empty($filters)) {
+            $query = FilterHelper::applyFilters($query, $filters, $allowedColumns);
         }
+
+        // ✅ ترتيب النتائج
+        $orderBy = $request->input('order_by', null);
+        $order   = $request->input('order', 'asc');
+        if ($orderBy && in_array($orderBy, $allowedColumns)) {
+            $query->orderBy($orderBy, $order);
+        }
+
+        // ✅ عدد النتائج في الصفحة (pagination)
+        $rpp = $request->input('rpp', 10);
+        $persons = $query->paginate($rpp);
+
+        // ✅ الإخراج بالتنسيق الجديد
+        return response()->json([
+            'status' => 200,
+            'code' => 8200,
+            'message' => __('common.success'),
+            'allPersons' => $persons
+        ]);
+
+    } catch (\Exception $e) {
+        $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
+        return ResponseHandler::error($this->prepareExceptionLog($e), 500, 24);
     }
+}
+
 
 public function createPerson(array $validatedRequest)
 {
@@ -79,10 +91,13 @@ public function createPerson(array $validatedRequest)
         }
 
         // ✅ إعادة الرد JSON
-        return ResponseHandler::success(
-            $person->load(['relative', 'interests', 'occasions.occasionName']),
-            __('common.success')
-        );
+    return response()->json([
+    'status' => 200,
+    'code' => 8200,
+    'message' => __('common.success'),
+    'addPerson' => $person->load(['relative', 'interests', 'occasions.occasionName']),
+]);
+
 
     } catch (\Exception $e) {
         $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
