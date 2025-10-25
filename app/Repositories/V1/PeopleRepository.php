@@ -6,6 +6,7 @@ use App\Models\People;
 use App\Utilities\ResponseHandler;
 use App\Utilities\FilterHelper;
 use Illuminate\Http\Request;
+ use Illuminate\Support\Facades\DB;
 
 class PeopleRepository extends BaseRepository
 {
@@ -45,10 +46,10 @@ class PeopleRepository extends BaseRepository
         }
     }
 
- public function createPerson(array $validatedRequest)
+public function createPerson(array $validatedRequest)
 {
     try {
-
+        // ✅ إنشاء الشخص
         $person = $this->model::create([
             'name'          => $validatedRequest['name'],
             'birthday_date' => $validatedRequest['birthday_date'] ?? null,
@@ -60,23 +61,26 @@ class PeopleRepository extends BaseRepository
             'user_id'       => auth('api')->id(),
         ]);
 
-
-        if (!empty($validatedRequest['birthday_date'])) {
-             $person->occasions()->create([
-        'title' => 'birthday' . ' ' . $person->name,
-        'date'  => $validatedRequest['birthday_date'],
-        'type'  => 'birthday',
-    ]);
+        // ✅ إنشاء المناسبات المتعددة
+        if (!empty($validatedRequest['occasions']) && is_array($validatedRequest['occasions'])) {
+            foreach ($validatedRequest['occasions'] as $occ) {
+                $person->occasions()->create([
+                    'occasion_name_id' => $occ['occasion_name_id'],
+                    'title' => $occ['title'] ?? 'Occasion for ' . $person->name,
+                    'date'  => $occ['date'] ?? null,
+                    'type'  => optional(\App\Models\OccasionName::find($occ['occasion_name_id']))->type,
+                ]);
+            }
         }
 
+        // ✅ ربط الاهتمامات
         if (!empty($validatedRequest['interests']) && is_array($validatedRequest['interests'])) {
-
             $person->interests()->sync($validatedRequest['interests']);
         }
 
-
+        // ✅ إعادة الرد JSON
         return ResponseHandler::success(
-            $person->load(['relative', 'interests']),
+            $person->load(['relative', 'interests', 'occasions.occasionName']),
             __('common.success')
         );
 
@@ -89,6 +93,7 @@ class PeopleRepository extends BaseRepository
         );
     }
 }
+
 
 
     public function showPerson(array $validatedRequest)
@@ -137,17 +142,30 @@ class PeopleRepository extends BaseRepository
         }
     }
 
-    public function deletePerson(array $validatedRequest)
-    {
-        try {
-            $person = $this->model::find($validatedRequest['id']);
-            if ($person) {
-                $person->delete();
-            }
-            return ResponseHandler::success([], __('common.success'));
-        } catch (\Exception $e) {
-            $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
-            return ResponseHandler::error($this->prepareExceptionLog($e), 500, 26);
+
+public function deletePerson(array $validatedRequest)
+{
+    DB::beginTransaction();
+
+    try {
+        $person = $this->model::find($validatedRequest['id']);
+
+        if (!$person) {
+            return ResponseHandler::error(__('common.errors.not_found'), 404, 2004);
         }
+
+        $person->occasions()->delete();
+        $person->interests()->detach();
+        $person->delete();
+
+        DB::commit();
+
+        return ResponseHandler::success([], __('common.success'));
+    } catch (\Exception $e) {
+        DB::rollBack();
+        $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
+        return ResponseHandler::error($this->prepareExceptionLog($e), 500, 26);
     }
+}
+
 }

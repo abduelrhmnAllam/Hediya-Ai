@@ -6,6 +6,8 @@ use App\Repositories\V1\PeopleRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller as Controller;
 use App\Utilities\ResponseHandler;
+use Illuminate\Validation\Rule;
+
 
 class PeopleController extends Controller
 {
@@ -49,16 +51,21 @@ class PeopleController extends Controller
      */
     public function store(Request $request)
     {
-        $rules = [
-            'name'          => 'required|string',
-            'birthday_date' => 'sometimes|date',
-            'gender'        => 'sometimes|string|in:male,female,other',
-            'region'        => 'sometimes|string',
-            'city'          => 'sometimes|string',
-            'address'       => 'sometimes|string',
-            'relative_id'   => 'sometimes|integer|exists:relatives,id',
-            'interests'     => 'sometimes|array', // array of interest IDs
-        ];
+     $rules = [
+    'name'          => 'required|string',
+    'birthday_date' => 'sometimes|date',
+    'gender'        => 'sometimes|string|in:male,female,other',
+    'region'        => 'sometimes|string',
+    'city'          => 'sometimes|string',
+    'address'       => 'sometimes|string',
+    'relative_id'   => 'sometimes|integer|exists:relatives,id',
+    'interests'     => 'sometimes|array',
+    'occasions'     => 'sometimes|array',
+    'occasions.*.occasion_name_id' => 'required|integer|exists:occasion_names,id',
+    'occasions.*.title' => 'nullable|string',
+    'occasions.*.date' => 'nullable|date',
+];
+
 
         $validated = $this->validated($rules, $request->all());
         if ($validated->fails()) {
@@ -119,7 +126,11 @@ class PeopleController extends Controller
     {
         $request->merge(['id' => $id]);
         $rules = [
-            'id' => 'required|integer|exists:people,id',
+         'id' => [
+                'required',
+                'integer',
+                Rule::exists('people', 'id'),
+            ],
         ];
 
         $validated = $this->validated($rules, $request->all());

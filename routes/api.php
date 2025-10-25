@@ -9,6 +9,7 @@ use App\Http\Controllers\V1\PeopleController;
 use App\Http\Controllers\V1\OccasionController;
 use App\Http\Controllers\V1\OpenaiController;
 use App\Http\Controllers\V1\ProductController;
+use App\Http\Controllers\v1\OnBoardingController;
 use Illuminate\Http\Request;
 Route::middleware('throttle:api')->group(function () {
 
@@ -46,6 +47,10 @@ Route::get('google/callback', [AuthController::class, 'handleGoogleCallback']);
 
 // Protected (with Passport Token JWT)
     Route::middleware('auth:api')->group(function () {
+
+    Route::get('relatives', [OnBoardingController::class, 'relatives']);
+    Route::get('interests', [OnBoardingController::class, 'interests']);
+    Route::get('allOccasions', [OnBoardingController::class, 'occasions']);
 
        Route::post('logout', [AuthController::class, 'logout']);
 
