@@ -116,8 +116,8 @@ public function completeRegister(Request $request): JsonResponse
 {
       $rules = [
         'email' => 'required|email|exists:users,email',
-        'first_name' => 'required|string|max:100',
-        'last_name' => 'required|string|max:100',
+        'name' => 'nullable|string|max:200',
+
         'password' => 'required|string|min:6',
         'mobile' => 'nullable|string|regex:/^(01)[0-9]{9}$/',
         'address' => 'nullable|string|max:255',

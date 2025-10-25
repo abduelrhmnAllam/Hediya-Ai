@@ -144,7 +144,7 @@ public function resendVerificationCode(array $data)
 
         // تحديث بيانات المستخدم
         $user->update([
-            'name' => trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? '')),
+            'name' => $data['name']  ?? null,
             'password' => Hash::make($data['password']),
             'mobile' => $data['mobile'] ?? null,
             'address' => $data['address'] ?? null,
