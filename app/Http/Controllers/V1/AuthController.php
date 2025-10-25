@@ -119,7 +119,7 @@ public function completeRegister(Request $request): JsonResponse
         'name' => 'nullable|string|max:200',
 
         'password' => 'required|string|min:6',
-        'mobile' => 'nullable|string|regex:/^(01)[0-9]{9}$/',
+        'mobile' => 'nullable|string|regex:/^(\+?\d{1,4}[-.\s]?)?(\d{7,15})$/',
         'address' => 'nullable|string|max:255',
     ];
     $validated = $this->validated($rules, $request->all());
@@ -142,6 +142,44 @@ public function submitPassword(Request $request): JsonResponse
     public function redirectToGoogle()
 {
     return Socialite::driver('google')->stateless()->redirect();
+}
+public function requestPasswordReset(Request $request)
+{
+    $rules = ['email' => 'required|email'];
+    $validated = $this->validated($rules, $request->all());
+    if ($validated->fails()) {
+        return ResponseHandler::error('Validation error', 422, 2001, $validated->errors());
+    }
+
+    return $this->authRepository->requestPasswordReset($validated->validated());
+}
+
+public function verifyResetCode(Request $request)
+{
+    $rules = [
+        'email' => 'required|email',
+        'code'  => 'required|digits:6'
+    ];
+    $validated = $this->validated($rules, $request->all());
+    if ($validated->fails()) {
+        return ResponseHandler::error('Validation error', 422, 2001, $validated->errors());
+    }
+
+    return $this->authRepository->verifyResetCode($validated->validated());
+}
+
+public function resetPassword(Request $request)
+{
+    $rules = [
+        'email'    => 'required|email',
+        'password' => 'required|min:6|confirmed'
+    ];
+    $validated = $this->validated($rules, $request->all());
+    if ($validated->fails()) {
+        return ResponseHandler::error('Validation error', 422, 2001, $validated->errors());
+    }
+
+    return $this->authRepository->resetPassword($validated->validated());
 }
 
 public function handleGoogleCallback()

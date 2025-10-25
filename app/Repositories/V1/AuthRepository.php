@@ -208,6 +208,81 @@ public function submitPasswordLogin(array $data)
             return ResponseHandler::error($this->prepareExceptionLog($e), 500,14);
         }
     }
+public function requestPasswordReset(array $data)
+{
+    try {
+        $email = $data['email'];
+        $user = $this->model::where('email', $email)->first();
+
+        if (!$user) {
+            return ResponseHandler::error('Email not found.', 404);
+        }
+
+        $code = rand(100000, 999999);
+        $user->update(['verification_code' => $code]);
+
+        \Mail::to($email)->send(new \App\Mail\VerificationCodeMail($code));
+
+        return ResponseHandler::success([
+            'email' => $email,
+            'message' => 'Reset code sent successfully.'
+        ]);
+    } catch (\Exception $e) {
+        $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
+        return ResponseHandler::error($this->prepareExceptionLog($e), 500, 14);
+    }
+}
+
+public function verifyResetCode(array $data)
+{
+    try {
+        $user = $this->model::where('email', $data['email'])
+            ->where('verification_code', $data['code'])
+            ->first();
+
+        if (!$user) {
+            return ResponseHandler::error('Invalid or expired code.', 400);
+        }
+
+        // وسم المستخدم بأنه جاهز لإعادة التعيين
+        $user->update(['is_verified' => true, 'verification_code' => null]);
+
+        return ResponseHandler::success([
+            'email' => $user->email,
+            'message' => 'Verification successful. You can now reset your password.'
+        ]);
+    } catch (\Exception $e) {
+        $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
+        return ResponseHandler::error($this->prepareExceptionLog($e), 500, 14);
+    }
+}
+
+public function resetPassword(array $data)
+{
+    try {
+        $user = $this->model::where('email', $data['email'])->first();
+
+        if (!$user) {
+            return ResponseHandler::error('User not found.', 404);
+        }
+
+        if (!$user->is_verified) {
+            return ResponseHandler::error('Verification required before reset.', 403);
+        }
+
+        $user->update([
+            'password' => \Hash::make($data['password']),
+        
+        ]);
+
+        return ResponseHandler::success([
+            'message' => 'Password has been reset successfully.'
+        ]);
+    } catch (\Exception $e) {
+        $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
+        return ResponseHandler::error($this->prepareExceptionLog($e), 500, 14);
+    }
+}
 
     public function loginUser(array $validatedRequest)
     {

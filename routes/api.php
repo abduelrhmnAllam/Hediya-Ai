@@ -33,6 +33,9 @@ Route::prefix('auth')->group(function () {
     Route::post('complete-register', [AuthController::class, 'completeRegister']); // مرحلة 3
     Route::post('submit-password', [AuthController::class, 'submitPassword']); // login by password
     Route::post('login', [AuthController::class, 'login']); // يمكنك الاحتفاظ بالـ login الحالي
+       Route::post('request-password-reset', [AuthController::class, 'requestPasswordReset']);
+    Route::post('verify-reset-code', [AuthController::class, 'verifyResetCode']);
+    Route::post('reset-password', [AuthController::class, 'resetPassword']);
     Route::middleware('auth:api')->post('logout', [AuthController::class, 'logout']);
 
     Route::get('google/redirect', [AuthController::class, 'redirectToGoogle']);
