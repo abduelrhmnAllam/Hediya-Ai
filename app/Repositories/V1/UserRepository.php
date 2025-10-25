@@ -45,79 +45,102 @@ class UserRepository extends BaseRepository
         }
     }
 
-  
-    public function createUser(array $validatedRequest)
-    {
-        try {
-            $user = $this->model::create([
-                'name' => trim(($validatedRequest['first_name'] ?? '') . ' ' . ($validatedRequest['last_name'] ?? '')),
-                'email' => $validatedRequest['email'],
-                'password' => $validatedRequest['password'],
-                'mobile' => $validatedRequest['mobile'] ?? null,
-                'address' => $validatedRequest['address'] ?? null,
-                'is_verified' => $validatedRequest['is_verified'] ?? false,
-            ]);
+  public function createUser(array $validatedRequest)
+{
+    try {
+        $user = $this->model::create([
+            'name' => trim(($validatedRequest['first_name'] ?? '') . ' ' . ($validatedRequest['last_name'] ?? '')),
+            'email' => $validatedRequest['email'],
+            'password' => $validatedRequest['password'],
+            'mobile' => $validatedRequest['mobile'] ?? null,
+            'address' => $validatedRequest['address'] ?? null,
+            'is_verified' => $validatedRequest['is_verified'] ?? false,
+            // 🆕 الخانات الجديدة
+            'gift_budgets' => $validatedRequest['gift_budgets'] ?? null,
+            'often_buy' => $validatedRequest['often_buy'] ?? null,
+            'is_completed' => $validatedRequest['is_completed'] ?? false,
+        ]);
 
-            return ResponseHandler::success($user, __('common.success'));
-        } catch (\Exception $e) {
-            $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
-            return ResponseHandler::error($this->prepareExceptionLog($e), 500, 26);
-        }
+        return ResponseHandler::success($user, __('common.success'));
+    } catch (\Exception $e) {
+        $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
+        return ResponseHandler::error($this->prepareExceptionLog($e), 500, 26);
     }
+}
 
-    /** 🧩 Update User */
-    public function updateUser(array $validatedRequest)
-    {
-        try {
-            $user = $this->model->find($validatedRequest['id']);
-            if (!$user) {
-                return ResponseHandler::error(__('common.not_found'), 404, 3005);
-            }
-
-            $updateData = [
-                'mobile' => $validatedRequest['mobile'] ?? $user->mobile,
-                'address' => $validatedRequest['address'] ?? $user->address,
-                'is_verified' => $validatedRequest['is_verified'] ?? $user->is_verified,
-            ];
-
-            if (isset($validatedRequest['first_name']) || isset($validatedRequest['last_name'])) {
-                $firstName = $validatedRequest['first_name'] ?? explode(' ', $user->name)[0] ?? '';
-                $lastName = $validatedRequest['last_name'] ?? explode(' ', $user->name)[1] ?? '';
-                $updateData['name'] = trim($firstName . ' ' . $lastName);
-            }
-
-            if (isset($validatedRequest['email'])) {
-                $updateData['email'] = $validatedRequest['email'];
-            }
-
-            if (isset($validatedRequest['password'])) {
-                $updateData['password'] = $validatedRequest['password'];
-            }
-
-            $user->update($updateData);
-
-            return ResponseHandler::success($user, __('common.success'));
-        } catch (\Exception $e) {
-            $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
-            return ResponseHandler::error($this->prepareExceptionLog($e), 500, 26);
+/** 🧩 Update User */
+public function updateUser(array $validatedRequest)
+{
+    try {
+        $user = $this->model->find($validatedRequest['id']);
+        if (!$user) {
+            return ResponseHandler::error(__('common.not_found'), 404, 3005);
         }
-    }
 
-    /** 🧩 Show User */
-    public function showUser(array $validatedRequest)
-    {
-        try {
-            $user = $this->model::find($validatedRequest['id']);
-            if (!$user) {
-                return ResponseHandler::error(__('common.not_found'), 404, 3005);
-            }
+        // 🧩 البيانات القابلة للتحديث
+        $updateData = [
+            'mobile' => $validatedRequest['mobile'] ?? $user->mobile,
+            'address' => $validatedRequest['address'] ?? $user->address,
+            'is_verified' => $validatedRequest['is_verified'] ?? $user->is_verified,
+            'gift_budgets' => $validatedRequest['gift_budgets'] ?? $user->gift_budgets,
+            'often_buy' => $validatedRequest['often_buy'] ?? $user->often_buy,
+            'is_completed' => $validatedRequest['is_completed'] ?? $user->is_completed,
+        ];
 
-            return ResponseHandler::success($user, __('common.success'));
-        } catch (\Exception $e) {
-            $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
-            return ResponseHandler::error($this->prepareExceptionLog($e), 500, 26);
+         // ✅ تحديث البريد لو تم إرساله
+        if (isset($validatedRequest['name'])) {
+            $updateData['name'] = $validatedRequest['name'];
         }
+
+        // ✅ تحديث البريد لو تم إرساله
+        if (isset($validatedRequest['email'])) {
+            $updateData['email'] = $validatedRequest['email'];
+        }
+
+        // ✅ تحديث الباسورد فقط لو تم إرساله (ما يتغيرش إلا وقت الحاجة)
+        if (!empty($validatedRequest['password'])) {
+            $updateData['password'] = $validatedRequest['password'];
+        }
+
+        // ✅ تنفيذ التحديث
+        $user->update($updateData);
+
+        // ✅ لو في اهتمامات جديدة (interests)
+        if (!empty($validatedRequest['interests']) && is_array($validatedRequest['interests'])) {
+            $user->interests()->sync($validatedRequest['interests']);
+        }
+
+        // ✅ تحميل العلاقات عشان يرجعها في الـ response
+        $user->load('interests');
+
+       return ResponseHandler::success(['userData' => $user], __('common.success'));
+
+
+    } catch (\Exception $e) {
+        $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
+        return ResponseHandler::error($this->prepareExceptionLog($e), 500, 26);
     }
+}
+
+
+/** 🧩 Show User */
+public function showUser(array $validatedRequest)
+{
+    try {
+        $user = $this->model::find($validatedRequest['id']);
+        if (!$user) {
+            return ResponseHandler::error(__('common.not_found'), 404, 3005);
+        }
+
+        // 🆕 تحميل العلاقات لو حابب (مثلاً interests)
+        $user->load('interests');
+
+        return ResponseHandler::success($user, __('common.success'));
+    } catch (\Exception $e) {
+        $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
+        return ResponseHandler::error($this->prepareExceptionLog($e), 500, 26);
+    }
+}
 
     /** 🧩 Delete User */
     public function deleteUser(array $validatedRequest)

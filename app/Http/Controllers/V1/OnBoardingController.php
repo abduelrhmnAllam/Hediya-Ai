@@ -23,16 +23,22 @@ class OnBoardingController extends Controller
                     $q->where('title', 'LIKE', "%{$query}%")
                         ->orderByRaw("CASE WHEN title LIKE '{$query}%' THEN 1 ELSE 2 END");
                 })
-                ->select('id', 'title')
+                ->select('id', 'title', 'image')
                 ->orderBy('title', 'asc')
                 ->limit(5)
-                ->get();
+                ->get()
+                ->map(function ($relative) {
+                    $relative->image_url = $relative->image
+                        ? asset('storage/' . $relative->image)
+                        : asset('images/default-relative.png');
+                    return $relative;
+                });
 
             return response()->json([
                 'status' => true,
                 'message' => 'Relatives retrieved successfully.',
-                'relatives' => $relatives,
-            ]);
+                'data' => $relatives,
+            ], 200);
         } catch (\Exception $e) {
             return $this->errorResponse($e);
         }
@@ -51,16 +57,22 @@ class OnBoardingController extends Controller
                     $q->where('title', 'LIKE', "%{$query}%")
                         ->orderByRaw("CASE WHEN title LIKE '{$query}%' THEN 1 ELSE 2 END");
                 })
-                ->select('id', 'title')
+                ->select('id', 'title', 'icon')
                 ->orderBy('title', 'asc')
                 ->limit(5)
-                ->get();
+                ->get()
+                ->map(function ($interest) {
+                    $interest->icon_url = $interest->icon
+                        ? asset('storage/' . $interest->icon)
+                        : asset('images/default-interest.png');
+                    return $interest;
+                });
 
             return response()->json([
                 'status' => true,
                 'message' => 'Interests retrieved successfully.',
-                'interests' => $interests,
-            ]);
+                'data' => $interests,
+            ], 200);
         } catch (\Exception $e) {
             return $this->errorResponse($e);
         }
@@ -87,8 +99,8 @@ class OnBoardingController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Occasion names retrieved successfully.',
-                'occasions' => $occasions,
-            ]);
+                'data' => $occasions,
+            ], 200);
         } catch (\Exception $e) {
             return $this->errorResponse($e);
         }

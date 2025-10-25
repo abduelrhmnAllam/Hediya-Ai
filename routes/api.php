@@ -9,7 +9,7 @@ use App\Http\Controllers\V1\PeopleController;
 use App\Http\Controllers\V1\OccasionController;
 use App\Http\Controllers\V1\OpenaiController;
 use App\Http\Controllers\V1\ProductController;
-use App\Http\Controllers\v1\OnBoardingController;
+use App\Http\Controllers\V1\OnBoardingController;
 use Illuminate\Http\Request;
 Route::middleware('throttle:api')->group(function () {
 

@@ -42,8 +42,7 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $validated = $this->validated([
-            'first_name' => 'required|string|max:100',
-            'last_name'  => 'required|string|max:100',
+            'name'       => 'required|string|max:100',
             'email'      => 'required|email|unique:users,email',
             'password'   => 'required|min:6',
             'mobile'     => 'nullable|string|max:20',
@@ -75,33 +74,43 @@ class UserController extends Controller
     }
 
     /** ==================== PUT /api/users/{id} ==================== */
+
     public function update(Request $request, string $id)
-    {
-        $data = $request->merge(['id' => $id])->all();
+{
+    $data = $request->merge(['id' => $id])->all();
 
-        $validated = $this->validated([
-            'id' => 'required|integer|exists:users,id',
-            'first_name' => 'sometimes|string|max:100',
-            'last_name'  => 'sometimes|string|max:100',
-            'email'      => 'sometimes|email|unique:users,email,' . $id,
-            'password'   => 'sometimes|min:6',
-            'mobile'     => 'nullable|string|max:20',
-            'address'    => 'nullable|string|max:255',
-            'is_verified' => 'sometimes|boolean',
-        ], $data);
+    $validated = $this->validated([
+        'id' => 'required|integer|exists:users,id',
+        'name' => 'sometimes|string|max:100',
 
-        if ($validated->fails()) {
-            return ResponseHandler::error(__('common.errors.validation'), 422, 3001, $validated->errors());
-        }
+        'email'      => 'sometimes|email|unique:users,email,' . $id,
+        'password'   => 'sometimes|min:6',
+        'mobile'     => 'nullable|string|max:20',
+        'address'    => 'nullable|string|max:255',
+        'is_verified' => 'sometimes|boolean',
+        'gift_budgets' => 'sometimes|numeric|min:0',
+        'often_buy' => 'sometimes|string|max:50',
+        'is_completed' => 'sometimes|boolean',
+        'interests' => 'sometimes|array',
+        'interests.*' => 'integer|exists:interests,id',
+    ], $data);
 
-        $validatedData = $validated->validated();
-
-        if (isset($validatedData['password'])) {
-            $validatedData['password'] = Hash::make($validatedData['password']);
-        }
-
-        return $this->userRepository->updateUser($validatedData);
+    if ($validated->fails()) {
+        return ResponseHandler::error(__('common.errors.validation'), 422, 3001, $validated->errors());
     }
+
+    $validatedData = $validated->validated();
+
+    // ✅ هشفر الباسورد فقط لو فعلاً اتبعت
+    if (!empty($validatedData['password'])) {
+        $validatedData['password'] = Hash::make($validatedData['password']);
+    } else {
+        unset($validatedData['password']);
+    }
+
+    return $this->userRepository->updateUser($validatedData);
+}
+
 
     /** ==================== DELETE /api/users/{id} ==================== */
     public function destroy(string $id)
