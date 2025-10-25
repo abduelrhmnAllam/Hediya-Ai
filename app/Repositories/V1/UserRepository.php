@@ -113,7 +113,8 @@ public function updateUser(array $validatedRequest)
         // ✅ تحميل العلاقات عشان يرجعها في الـ response
         $user->load('interests');
 
-       return ResponseHandler::success(['userData' => $user], __('common.success'));
+     return ResponseHandler::userSuccess($user->load('interests'));
+
 
 
     } catch (\Exception $e) {

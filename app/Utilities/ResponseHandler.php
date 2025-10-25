@@ -19,6 +19,18 @@ class ResponseHandler
      * @param bool        $encode       Whether to apply HTML entity encoding to data
      * @return \Illuminate\Http\JsonResponse
      */
+
+    public static function userSuccess($user, $message = 'success', $code = 8200)
+{
+    return response()->json([
+        'status' => 200,
+        'code' => $code,
+        'message' => $message,
+        'userData' => $user,
+    ]);
+}
+
+
     public static function success(
         $data = null,
         string $message = 'Success',

@@ -37,7 +37,7 @@ class OnBoardingController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Relatives retrieved successfully.',
-                'data' => $relatives,
+                'relatives' => $relatives,
             ], 200);
         } catch (\Exception $e) {
             return $this->errorResponse($e);
@@ -71,7 +71,7 @@ class OnBoardingController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Interests retrieved successfully.',
-                'data' => $interests,
+                'interests' => $interests,
             ], 200);
         } catch (\Exception $e) {
             return $this->errorResponse($e);
@@ -99,7 +99,7 @@ class OnBoardingController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Occasion names retrieved successfully.',
-                'data' => $occasions,
+                'occasions' => $occasions,
             ], 200);
         } catch (\Exception $e) {
             return $this->errorResponse($e);
