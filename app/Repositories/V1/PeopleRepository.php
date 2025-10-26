@@ -22,7 +22,8 @@ class PeopleRepository extends BaseRepository
 {
     try {
 
-        $user = auth()->user();
+      $user = auth('api')->user();
+
 
         if (!$user) {
             return ResponseHandler::error('Unauthorized user.', 401);
