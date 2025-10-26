@@ -47,10 +47,14 @@ class PeopleRepository extends BaseRepository
         // ✅ إلغاء الـ paginate — هيرجع أول 5 فقط
         $persons = $query->limit(5)->get();
 
-        // ✅ الرد النهائي
-        return ResponseHandler::success([
+       // ✅ الرد النهائي
+        return response()->json([
+            'status' => 200,
+            'code' => 8200,
+            'message' => __('common.success'),
             'allPersons' => $persons
-        ], __('common.success'));
+        ], 200);
+
 
     } catch (\Exception $e) {
         $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
@@ -122,37 +126,44 @@ public function createPerson(array $validatedRequest)
         }
     }
 
-    public function updatePerson(array $validatedRequest)
-    {
-        try {
-            $person = $this->model::find($validatedRequest['id']);
-            if (!$person) {
-                return ResponseHandler::error(__('common.not_found'), 404, 2009);
-            }
-
-            $person->update([
-                'name'          => $validatedRequest['name'] ?? $person->name,
-                'birthday_date' => $validatedRequest['birthday_date'] ?? $person->birthday_date,
-                'gender'        => $validatedRequest['gender'] ?? $person->gender,
-                'region'        => $validatedRequest['region'] ?? $person->region,
-                'city'          => $validatedRequest['city'] ?? $person->city,
-                'address'       => $validatedRequest['address'] ?? $person->address,
-                'relative_id'   => $validatedRequest['relative_id'] ?? $person->relative_id,
-            ]);
-
-            if (isset($validatedRequest['interests'])) {
-                $person->interests()->sync($validatedRequest['interests']);
-            }
-
-            return ResponseHandler::success(
-                $person->load(['relative','interests']),
-                __('common.success')
-            );
-        } catch (\Exception $e) {
-            $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
-            return ResponseHandler::error($this->prepareExceptionLog($e), 500, 26);
+public function updatePerson(array $validatedRequest)
+{
+    try {
+        $person = $this->model::find($validatedRequest['id']);
+        if (!$person) {
+            return ResponseHandler::error(__('common.not_found'), 404, 2009);
         }
+
+        // ✅ تحديث البيانات
+        $person->update([
+            'name'          => $validatedRequest['name'] ?? $person->name,
+            'birthday_date' => $validatedRequest['birthday_date'] ?? $person->birthday_date,
+            'gender'        => $validatedRequest['gender'] ?? $person->gender,
+            'region'        => $validatedRequest['region'] ?? $person->region,
+            'city'          => $validatedRequest['city'] ?? $person->city,
+            'address'       => $validatedRequest['address'] ?? $person->address,
+            'relative_id'   => $validatedRequest['relative_id'] ?? $person->relative_id,
+        ]);
+
+        // ✅ تحديث الاهتمامات
+        if (isset($validatedRequest['interests'])) {
+            $person->interests()->sync($validatedRequest['interests']);
+        }
+
+        // ✅ الرد النهائي بنفس تنسيقك
+        return response()->json([
+            'status' => 200,
+            'code' => 8200,
+            'message' => __('common.success'),
+            'updatePerson' => $person->load(['relative', 'interests', 'occasions.occasionName']),
+        ], 200);
+
+    } catch (\Exception $e) {
+        $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
+        return ResponseHandler::error($this->prepareExceptionLog($e), 500, 26);
     }
+}
+
 
 
 public function deletePerson(array $validatedRequest)
