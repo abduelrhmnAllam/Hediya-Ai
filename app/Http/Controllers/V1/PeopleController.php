@@ -53,11 +53,6 @@ class PeopleController extends Controller
     {
      $rules = [
     'name'          => 'required|string',
-    'birthday_date' => 'sometimes|date',
-    'gender'        => 'sometimes|string|in:male,female,other',
-    'region'        => 'sometimes|string',
-    'city'          => 'sometimes|string',
-    'address'       => 'sometimes|string',
     'relative_id'   => 'sometimes|integer|exists:relatives,id',
     'interests'     => 'sometimes|array',
     'occasions'     => 'sometimes|array',

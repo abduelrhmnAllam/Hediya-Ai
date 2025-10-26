@@ -18,12 +18,13 @@ class PeopleRepository extends BaseRepository
         $this->logChannel = 'persons_logs';
     }
 
-   public function personListing($request)
-{
+    public function personListing($request)
+   {
     try {
+        // ✅ جلب البيانات مع العلاقات
         $query = $this->model::with(['relative', 'interests', 'occasions.occasionName']);
 
-        // 🧩 الأعمدة المسموح بالفلترة والترتيب عليها
+        // 🧩 الأعمدة المسموح بالفلترة عليها
         $allowedColumns = ['name', 'gender', 'city'];
 
         // ✅ تطبيق الفلاتر
@@ -39,11 +40,10 @@ class PeopleRepository extends BaseRepository
             $query->orderBy($orderBy, $order);
         }
 
-        // ✅ عدد النتائج في الصفحة (pagination)
-        $rpp = $request->input('rpp', 10);
-        $persons = $query->paginate($rpp);
+        // ✅ إرجاع أول 5 نتائج فقط بدون paginate
+        $persons = $query->limit(5)->get();
 
-        // ✅ الإخراج بالتنسيق الجديد
+        // ✅ Response منسق باسم allPersons فقط
         return response()->json([
             'status' => 200,
             'code' => 8200,
@@ -58,17 +58,13 @@ class PeopleRepository extends BaseRepository
 }
 
 
+
 public function createPerson(array $validatedRequest)
 {
     try {
         // ✅ إنشاء الشخص
         $person = $this->model::create([
             'name'          => $validatedRequest['name'],
-            'birthday_date' => $validatedRequest['birthday_date'] ?? null,
-            'gender'        => $validatedRequest['gender'] ?? null,
-            'region'        => $validatedRequest['region'] ?? null,
-            'city'          => $validatedRequest['city'] ?? null,
-            'address'       => $validatedRequest['address'] ?? null,
             'relative_id'   => $validatedRequest['relative_id'] ?? null,
             'user_id'       => auth('api')->id(),
         ]);

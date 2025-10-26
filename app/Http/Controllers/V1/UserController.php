@@ -81,17 +81,15 @@ class UserController extends Controller
 
     $validated = $this->validated([
         'id' => 'required|integer|exists:users,id',
-        'name' => 'sometimes|string|max:100',
+        'name' => 'nullable|string|max:100',
 
-        'email'      => 'sometimes|email|unique:users,email,' . $id,
-        'password'   => 'sometimes|min:6',
         'mobile'     => 'nullable|string|max:20',
         'address'    => 'nullable|string|max:255',
-        'is_verified' => 'sometimes|boolean',
-        'gift_budgets' => 'sometimes|numeric|min:0',
-        'often_buy' => 'sometimes|string|max:50',
-        'is_completed' => 'sometimes|boolean',
-        'interests' => 'sometimes|array',
+        'is_verified' => 'nullable|boolean',
+        'gift_budgets' => 'nullable|numeric|min:0',
+        'often_buy' => 'nullable|string|max:50',
+        'is_completed' => 'nullable|boolean',
+        'interests' => 'nullable|array',
         'interests.*' => 'integer|exists:interests,id',
     ], $data);
 
