@@ -20,17 +20,16 @@ class UserRepository extends BaseRepository
 public function userListing($request)
 {
     try {
-        // ✅ الحصول على المستخدم الحالي من الـ access token
+
         $user = auth()->user();
 
         if (!$user) {
             return ResponseHandler::error('Unauthorized user.', 401);
         }
 
-        // ✅ تحميل الأشخاص المرتبطين فقط بهذا المستخدم
+
         $query = $user->persons()->with(['relative', 'interests', 'occasions.occasionName']);
 
-        // ✅ الفلاتر (بحث بالاسم - النوع - المدينة إلخ)
         if ($filters = $request->input('filters')) {
             foreach ($filters as $field => $value) {
                 if (in_array($field, ['name', 'gender', 'city'])) {
