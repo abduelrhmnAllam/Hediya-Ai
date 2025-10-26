@@ -25,7 +25,7 @@ class User extends Authenticatable
         'avatar',
         'verification_code',
         'is_verified',
-           'gift_budgets',
+          'gift_budgets',
        'often_buy',
        'is_completed',
     ];

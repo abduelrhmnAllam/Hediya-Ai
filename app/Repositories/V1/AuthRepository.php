@@ -131,31 +131,44 @@ public function resendVerificationCode(array $data)
    public function completeRegistration(array $data)
 {
     try {
-        // البحث عن المستخدم
+        // ✅ البحث عن المستخدم
         $user = $this->model::where('email', $data['email'])->first();
 
         if (!$user) {
             return ResponseHandler::error('Email not found. Please check.', 404);
         }
 
+        // ✅ لازم يكون الايميل متحقق
         if (!$user->is_verified) {
             return ResponseHandler::error('Email not verified. Please verify first.', 403);
         }
 
-        // تحديث بيانات المستخدم
-        $user->update([
-            'name' => $data['name']  ?? null,
-            'password' => Hash::make($data['password']),
-            'mobile' => $data['mobile'] ?? null,
-            'address' => $data['address'] ?? null,
-        ]);
+        // ✅ تحديث البيانات الأساسية
+        $updateData = [
+            'name' => $data['name'] ?? $user->name,
+            'mobile' => $data['mobile'] ?? $user->mobile,
+            'address' => $data['address'] ?? $user->address,
+        ];
 
-        // إنشاء توكن الدخول
+        // ⚡ لو المستخدم كتب باسورد → نعمل تحديث و نفعّل is_completed
+        if (!empty($data['password'])) {
+            $updateData['password'] = Hash::make($data['password']);
+            $updateData['is_completed'] = true;
+        }
+
+        // ✅ تنفيذ التحديث
+        $user->update($updateData);
+
+        // ✅ إنشاء التوكن
         $token = $user->createToken('authToken')->accessToken;
 
+        // ✅ تحضير الرد
         $dataToReturn = [
             'token' => $token,
-            'user' => $user->only(['id', 'name', 'email', 'mobile', 'address', 'is_verified', 'created_at']),
+            'userData' => $user->only([
+                'id', 'name', 'email', 'mobile', 'address',
+                'is_verified', 'is_completed', 'created_at', 'updated_at'
+            ]),
         ];
 
         return ResponseHandler::success($dataToReturn, 'Registration completed successfully.');
@@ -272,7 +285,7 @@ public function resetPassword(array $data)
 
         $user->update([
             'password' => \Hash::make($data['password']),
-        
+
         ]);
 
         return ResponseHandler::success([

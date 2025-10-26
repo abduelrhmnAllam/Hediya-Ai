@@ -17,33 +17,47 @@ class UserRepository extends BaseRepository
         $this->logChannel = 'user_logs';
     }
 
-    /** 🧩 List Users */
-    public function userListing($request)
-    {
-        try {
-            $query = $this->model::query();
+public function userListing($request)
+{
+    try {
+        // ✅ الحصول على المستخدم الحالي من الـ access token
+        $user = auth()->user();
 
-            if ($filters = $request->input('filters')) {
-                foreach ($filters as $field => $value) {
-                    if (in_array($field, ['name', 'email', 'mobile'])) {
-                        $query->where($field, 'LIKE', "%{$value}%");
-                    }
+        if (!$user) {
+            return ResponseHandler::error('Unauthorized user.', 401);
+        }
+
+        // ✅ تحميل الأشخاص المرتبطين فقط بهذا المستخدم
+        $query = $user->persons()->with(['relative', 'interests', 'occasions.occasionName']);
+
+        // ✅ الفلاتر (بحث بالاسم - النوع - المدينة إلخ)
+        if ($filters = $request->input('filters')) {
+            foreach ($filters as $field => $value) {
+                if (in_array($field, ['name', 'gender', 'city'])) {
+                    $query->where($field, 'LIKE', "%{$value}%");
                 }
             }
-
-            $orderBy = $request->input('order_by', 'id');
-            $order = $request->input('order', 'desc');
-            $query->orderBy($orderBy, $order);
-
-            $rpp = $request->input('rpp', 10);
-            $users = $query->paginate($rpp);
-
-            return ResponseHandler::success($users, __('common.success'));
-        } catch (\Exception $e) {
-            $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
-            return ResponseHandler::error($this->prepareExceptionLog($e), 500, 24);
         }
+
+        // ✅ الترتيب
+        $orderBy = $request->input('order_by', 'id');
+        $order = $request->input('order', 'desc');
+        $query->orderBy($orderBy, $order);
+
+        // ✅ إلغاء الـ paginate — هيرجع أول 5 فقط
+        $persons = $query->limit(5)->get();
+
+        // ✅ الرد النهائي
+        return ResponseHandler::success([
+            'allPersons' => $persons
+        ], __('common.success'));
+
+    } catch (\Exception $e) {
+        $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
+        return ResponseHandler::error($this->prepareExceptionLog($e), 500, 24);
     }
+}
+
 
   public function createUser(array $validatedRequest)
 {
