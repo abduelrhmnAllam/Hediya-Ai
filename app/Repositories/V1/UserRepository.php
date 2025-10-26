@@ -27,7 +27,6 @@ public function userListing($request)
             return ResponseHandler::error('Unauthorized user.', 401);
         }
 
-
         $query = $user->persons()->with(['relative', 'interests', 'occasions.occasionName']);
 
         if ($filters = $request->input('filters')) {

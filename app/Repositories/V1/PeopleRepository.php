@@ -18,38 +18,38 @@ class PeopleRepository extends BaseRepository
         $this->logChannel = 'persons_logs';
     }
 
-    public function personListing($request)
-   {
+   public function personListing($request)
+{
     try {
-        // ✅ جلب البيانات مع العلاقات
-        $query = $this->model::with(['relative', 'interests', 'occasions.occasionName']);
 
-        // 🧩 الأعمدة المسموح بالفلترة عليها
-        $allowedColumns = ['name', 'gender', 'city'];
+        $user = auth()->user();
 
-        // ✅ تطبيق الفلاتر
-        $filters = $request->input('filters', []);
-        if (!empty($filters)) {
-            $query = FilterHelper::applyFilters($query, $filters, $allowedColumns);
+        if (!$user) {
+            return ResponseHandler::error('Unauthorized user.', 401);
         }
 
-        // ✅ ترتيب النتائج
-        $orderBy = $request->input('order_by', null);
-        $order   = $request->input('order', 'asc');
-        if ($orderBy && in_array($orderBy, $allowedColumns)) {
-            $query->orderBy($orderBy, $order);
+        $query = $user->persons()->with(['relative', 'interests', 'occasions.occasionName']);
+
+        if ($filters = $request->input('filters')) {
+            foreach ($filters as $field => $value) {
+                if (in_array($field, ['name', 'gender', 'city'])) {
+                    $query->where($field, 'LIKE', "%{$value}%");
+                }
+            }
         }
 
-        // ✅ إرجاع أول 5 نتائج فقط بدون paginate
+        // ✅ الترتيب
+        $orderBy = $request->input('order_by', 'id');
+        $order = $request->input('order', 'desc');
+        $query->orderBy($orderBy, $order);
+
+        // ✅ إلغاء الـ paginate — هيرجع أول 5 فقط
         $persons = $query->limit(5)->get();
 
-        // ✅ Response منسق باسم allPersons فقط
-        return response()->json([
-            'status' => 200,
-            'code' => 8200,
-            'message' => __('common.success'),
+        // ✅ الرد النهائي
+        return ResponseHandler::success([
             'allPersons' => $persons
-        ]);
+        ], __('common.success'));
 
     } catch (\Exception $e) {
         $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');

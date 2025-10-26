@@ -24,21 +24,16 @@ class PeopleController extends Controller
      */
     public function index(Request $request)
     {
-        $rules = [
+          $validated = $this->validated([
             'filters' => 'sometimes|array',
-
-            'filters.name'    => 'sometimes|string',
-            'filters.gender'  => 'sometimes|string',
-            'filters.city'    => 'sometimes|string',
-
-            'order_by' => 'sometimes|in:name,gender,city',
-            'order'    => 'sometimes|in:asc,desc',
-
+            'filters.name' => 'sometimes|string',
+            'filters.email' => 'sometimes|string',
+            'order_by' => 'sometimes|in:id,name,email,created_at',
+            'order' => 'sometimes|in:asc,desc',
             'rpp' => 'sometimes|integer|min:1',
-            'page'=> 'sometimes|integer|min:1',
-        ];
+            'page' => 'sometimes|integer|min:1',
+        ], $request->all());
 
-        $validated = $this->validated($rules, $request->all());
         if ($validated->fails()) {
             return ResponseHandler::error(__('common.errors.validation'), 422, 2001, $validated->errors());
         }
