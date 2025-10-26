@@ -17,21 +17,21 @@ class RelativesTableSeeder extends Seeder
          DB::table('relatives')->truncate();
 
         $relatives = [
-            ['title' => 'Father',        'image' => 'relatives/father.png'],
-            ['title' => 'Mother',        'image' => 'relatives/mother.png'],
-            ['title' => 'Brother',       'image' => 'relatives/brother.png'],
-            ['title' => 'Sister',        'image' => 'relatives/sister.png'],
-            ['title' => 'Grandfather',   'image' => 'relatives/grandfather.png'],
-            ['title' => 'Grandmother',   'image' => 'relatives/grandmother.png'],
-            ['title' => 'Son',           'image' => 'relatives/son.png'],
-            ['title' => 'Daughter',      'image' => 'relatives/daughter.png'],
-            ['title' => 'Uncle',         'image' => 'relatives/uncle.png'],
-            ['title' => 'Aunt',          'image' => 'relatives/aunt.png'],
-            ['title' => 'Friend',        'image' => 'relatives/friend.png'],
-            ['title' => 'Wife',          'image' => 'relatives/wife.png'],
-            ['title' => 'Husband',       'image' => 'relatives/husband.png'],
-            ['title' => 'Neighbor',      'image' => 'relatives/neighbor.png'],
-            ['title' => 'Partner',       'image' => 'relatives/partner.png'],
+            ['title' => 'Father',        'image' => 'relatives/1.png'],
+            ['title' => 'Mother',        'image' => 'relatives/2.png'],
+            ['title' => 'Brother',       'image' => 'relatives/3.png'],
+            ['title' => 'Sister',        'image' => 'relatives/5.png'],
+            ['title' => 'Grandfather',   'image' => 'relatives/6.png'],
+            ['title' => 'Grandmother',   'image' => 'relatives/5.png'],
+            ['title' => 'Son',           'image' => 'relatives/3.png'],
+            ['title' => 'Daughter',      'image' => 'relatives/5.png'],
+            ['title' => 'Uncle',         'image' => 'relatives/6.png'],
+            ['title' => 'Aunt',          'image' => 'relatives/4.png'],
+            ['title' => 'Friend',        'image' => 'relatives/3.png'],
+            ['title' => 'Wife',          'image' => 'relatives/2.png'],
+            ['title' => 'Husband',       'image' => 'relatives/6.png'],
+            ['title' => 'Neighbor',      'image' => 'relatives/7.png'],
+            ['title' => 'Partner',       'image' => 'relatives/4.png'],
         ];
 
         foreach ($relatives as $relative) {
