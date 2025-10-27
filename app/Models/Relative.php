@@ -18,7 +18,7 @@ class Relative extends Model
     public function getImageUrlAttribute()
     {
         if ($this->image) {
-            return asset('storage/re' . $this->image);
+            return asset('storage/' . $this->image);
         }
         return asset('images/default-relative.png');
     }
