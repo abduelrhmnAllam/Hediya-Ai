@@ -86,28 +86,40 @@ class PeopleController extends Controller
     /**
      * PUT /api/persons/{id}
      */
-    public function update($id, Request $request)
-    {
-        $request->merge(['id' => $id]);
-        $rules = [
-            'id'            => 'required|integer|exists:people,id',
-            'name'          => 'sometimes|string',
-            'birthday_date' => 'sometimes|date',
-            'gender'        => 'sometimes|string|in:male,female,other',
-            'region'        => 'sometimes|string',
-            'city'          => 'sometimes|string',
-            'address'       => 'sometimes|string',
-            'relative_id'   => 'sometimes|integer|exists:relatives,id',
-            'interests'     => 'sometimes|array',
-        ];
+  public function update($id, Request $request)
+{
+    $request->merge(['id' => $id]);
 
-        $validated = $this->validated($rules, $request->all());
-        if ($validated->fails()) {
-            return ResponseHandler::error(__('common.errors.validation'), 422, 2007, $validated->errors());
-        }
+    $rules = [
+        'id'            => 'required|integer|exists:people,id',
+        'name'          => 'sometimes|string|max:255',
+        'birthday_date' => 'sometimes|date',
+        'gender'        => 'sometimes|string|in:male,female,other',
+        'region'        => 'sometimes|string|max:255',
+        'city'          => 'sometimes|string|max:255',
+        'address'       => 'sometimes|string|max:500',
+        'relative_id'   => 'sometimes|integer|exists:relatives,id',
 
-        return $this->personRepository->updatePerson($validated->validated());
+        // ✅ الاهتمامات (IDs فقط)
+        'interests'         => 'sometimes|array',
+        'interests.*'       => 'integer|exists:interests,id',
+
+        // ✅ المناسبات (تحديث ذكي)
+        'occasions'                         => 'sometimes|array',
+        'occasions.*.occasion_name_id'      => 'required_with:occasions|integer|exists:occasion_names,id',
+        'occasions.*.title'                 => 'sometimes|string|max:255',
+        'occasions.*.date'                  => 'sometimes|date',
+        'occasions.*.type'                  => 'sometimes|string|max:100',
+    ];
+
+    $validated = $this->validated($rules, $request->all());
+
+    if ($validated->fails()) {
+        return ResponseHandler::error(__('common.errors.validation'), 422, 2007, $validated->errors());
     }
+
+    return $this->personRepository->updatePerson($validated->validated());
+}
 
     /**
      * DELETE /api/persons/{id}
