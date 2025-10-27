@@ -126,15 +126,17 @@ public function createPerson(array $validatedRequest)
         }
     }
 
-public function updatePerson(array $validatedRequest)
+
+    public function updatePerson(array $validatedRequest)
 {
     try {
+        // ✅ البحث عن الشخص
         $person = $this->model::find($validatedRequest['id']);
         if (!$person) {
             return ResponseHandler::error(__('common.not_found'), 404, 2009);
         }
 
-        // ✅ تحديث البيانات
+        // ✅ تحديث بيانات الشخص الأساسية
         $person->update([
             'name'          => $validatedRequest['name'] ?? $person->name,
             'birthday_date' => $validatedRequest['birthday_date'] ?? $person->birthday_date,
@@ -150,20 +152,39 @@ public function updatePerson(array $validatedRequest)
             $person->interests()->sync($validatedRequest['interests']);
         }
 
-        // ✅ الرد النهائي بنفس تنسيقك
+        // ✅ تحديث المناسبات (occasions)
+        if (isset($validatedRequest['occasions']) && is_array($validatedRequest['occasions'])) {
+            foreach ($validatedRequest['occasions'] as $occasionData) {
+                $person->occasions()->updateOrCreate(
+                    [
+                       
+                        'occasion_name_id' => $occasionData['occasion_name_id'] ?? null,
+                    ],
+                    [
+                        'title'            => $occasionData['title'] ?? null,
+                        'date'             => $occasionData['date'] ?? null,
+                        'type'             => $occasionData['type'] ?? null,
+                    ]
+                );
+            }
+        }
+
+        // ✅ تحميل العلاقات المطلوبة
+        $person->load(['relative', 'interests', 'occasions.occasionName']);
+
+        // ✅ الرد النهائي بنفس تنسيق النظام عندك
         return response()->json([
             'status' => 200,
             'code' => 8200,
             'message' => __('common.success'),
-            'updatePerson' => $person->load(['relative', 'interests', 'occasions.occasionName']),
+            'updatePerson' => $person,
         ], 200);
 
     } catch (\Exception $e) {
         $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
         return ResponseHandler::error($this->prepareExceptionLog($e), 500, 26);
     }
-}
-
+ }
 
 
 public function deletePerson(array $validatedRequest)
