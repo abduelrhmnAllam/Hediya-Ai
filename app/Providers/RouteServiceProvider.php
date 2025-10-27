@@ -38,7 +38,7 @@ class RouteServiceProvider extends ServiceProvider
     {
         RateLimiter::for('api', function (Request $request) {
             // السماح بـ 60 طلب في الدقيقة لكل مستخدم أو IP
-            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
+            return Limit::perMinute(200)->by($request->user()?->id ?: $request->ip());
         });
     }
 }
