@@ -29,8 +29,9 @@ class OnBoardingController extends Controller
                 ->get()
                 ->map(function ($relative) {
                     $relative->image_url = $relative->image
-                        ? asset('storage/' . $relative->image)
-                        : asset('images/default-relative.png');
+    ? asset('storage/' . $relative->image)
+    : asset('images/default-relative.png');
+
                     return $relative;
                 });
 

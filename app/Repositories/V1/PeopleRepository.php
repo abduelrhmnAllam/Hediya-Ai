@@ -19,7 +19,7 @@ class PeopleRepository extends BaseRepository
     }
 
    public function personListing($request)
-{
+ {
     try {
 
       $user = auth('api')->user();
