@@ -61,12 +61,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (!categoryId || !container) continue;
 
-        // ✅ خليه مفتوح من البداية
+       
         collapse.classList.add('show');
         button.classList.remove('collapsed');
         button.setAttribute('aria-expanded', 'true');
 
-        // ✅ حمّل المنتجات مباشرة
+
         container.innerHTML = '<p class="text-info">⏳ جاري تحميل الفئات والمنتجات...</p>';
 
         try {
@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             let html = '';
 
-            // ✅ الفئات الفرعية
+
             if (subcategories.length > 0) {
                 html += '<div class="ms-3">';
                 subcategories.forEach(sub => {
@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 html += '</div>';
             }
 
-            // ✅ المنتجات في سلايدر
+
             if (products.length > 0) {
                 html += `
                     <hr>
@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 html += '</div>';
             }
 
-            // ✅ لو مفيش فئات ولا منتجات
+
             if (!subcategories.length && !products.length) {
                 html = '<p class="text-muted">لا توجد فئات فرعية أو منتجات.</p>';
             }
