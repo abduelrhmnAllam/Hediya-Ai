@@ -214,32 +214,21 @@ public function deletePerson(array $validatedRequest)
 
 public function personListingWithRelativeOnly()
 {
-    try {
+      $user = auth('api')->user();
 
-        $user = auth('api')->user();
+    $persons = $user->persons()
+        ->select('id', 'name', 'relative_id')
+        ->with('relative:id,name')
+        ->orderBy('id','desc')
+        ->limit(50)
+        ->get();
 
-        if (!$user) {
-            return ResponseHandler::error('Unauthorized user.', 401);
-        }
-
-        $persons = $user->persons()
-            ->with(['relative:id,name'])
-            ->select('id','name','relative_id')
-            ->orderBy('id','desc')
-            ->limit(50)
-            ->get();
-
-        return response()->json([
-            'status' => 200,
-            'code'   => 8200,
-            'message'=> __('common.success'),
-            'persons'=> $persons
-        ],200);
-
-    } catch (\Exception $e) {
-        $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
-        return ResponseHandler::error($this->prepareExceptionLog($e), 500, 26);
-    }
+    return response()->json([
+        'status'=>200,
+        'code'=>8200,
+        'message'=>'success',
+        'persons'=>$persons
+    ]);
 }
 
 
