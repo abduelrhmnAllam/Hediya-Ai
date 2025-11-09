@@ -225,20 +225,7 @@ public function personListingWithRelativeOnly($request)
             ->with(['relative:id,name'])
             ->select('id','name','relative_id');
 
-        // filters (اختياري زي الأساسية)
-        if ($filters = $request->input('filters')) {
-            foreach ($filters as $field => $value) {
-                if (in_array($field, ['name', 'gender', 'city'])) {
-                    $query->where($field, 'LIKE', "%{$value}%");
-                }
-            }
-        }
-
-        // order
-        $orderBy = $request->input('order_by', 'id');
-        $order = $request->input('order', 'desc');
-        $query->orderBy($orderBy,$order);
-
+   
         // return only 5 items
         $persons = $query->limit(50)->get();
 
