@@ -54,7 +54,7 @@ Route::get('google/callback', [AuthController::class, 'handleGoogleCallback']);
 
             Route::get('/persons/with-relatives',[PeopleController::class,'indexWithRelativeOnly']);
             Route::post('/occasions/person/{id}',[OccasionController::class,'addNewOccassion']);
-
+              Route::get('/Persons/occasions', [OccasionController::class, 'GetAllOccassions']);
        Route::post('logout', [AuthController::class, 'logout']);
 
         // CRUD for Users, Projects, Timesheets
