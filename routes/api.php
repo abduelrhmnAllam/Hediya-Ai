@@ -52,6 +52,9 @@ Route::get('google/callback', [AuthController::class, 'handleGoogleCallback']);
     Route::get('interests', [OnBoardingController::class, 'interests']);
     Route::get('allOccasions', [OnBoardingController::class, 'occasions']);
 
+            Route::get('/persons/with-relatives',[PeopleController::class,'indexWithRelativeOnly']);
+            Route::post('/occasions/person/{id}',[OccasionController::class,'addNewOccassion']);
+
        Route::post('logout', [AuthController::class, 'logout']);
 
         // CRUD for Users, Projects, Timesheets
@@ -59,9 +62,6 @@ Route::get('google/callback', [AuthController::class, 'handleGoogleCallback']);
         Route::apiResource('projects', ProjectController::class);
         Route::apiResource('timesheets', TimesheetController::class);
             Route::apiResource('persons', PeopleController::class);
-
-            Route::get('/persons/with-relatives',[PeopleController::class,'indexWithRelativeOnly']);
-            Route::post('/occasions/person/{id}',[OccasionController::class,'addNewOccassion']);
 
 
               Route::apiResource('occasions', OccasionController::class);
