@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Repositories\V1;
+use App\Models\People;
 
 use App\Models\Occasion;
 use App\Utilities\ResponseHandler;
@@ -32,7 +33,7 @@ class OccasionRepository
     }
 
     public function addOccasion(array $validated)
-   {
+    {
     try {
         $person = People::find($validated['id']);
         if (!$person) {
