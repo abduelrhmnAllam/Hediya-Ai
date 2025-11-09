@@ -146,8 +146,12 @@ class PeopleController extends Controller
     }
 
 
-    public function indexWithRelativeOnly(Request $request)
+      public function indexWithRelativeOnly(Request $request)
 {
+    // لازم دا اول سطر
+    $request->request->remove('id');
+    $request->query->remove('id');
+
     $validated = $this->validated([
         'filters' => 'sometimes|array',
         'filters.name' => 'sometimes|string',
@@ -163,6 +167,7 @@ class PeopleController extends Controller
 
     return $this->personRepository->personListingWithRelativeOnly($request);
 }
+
 
 
 }
