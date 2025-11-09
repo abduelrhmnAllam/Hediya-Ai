@@ -146,11 +146,9 @@ class PeopleController extends Controller
     }
 
 
-      public function indexWithRelativeOnly(Request $request)
+        public function indexWithRelativeOnly()
 {
-   
-
-    return $this->personRepository->personListingWithRelativeOnly($request);
+    return $this->personRepository->personListingWithRelativeOnly();
 }
 
 

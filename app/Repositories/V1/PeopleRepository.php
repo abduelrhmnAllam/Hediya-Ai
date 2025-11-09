@@ -212,22 +212,22 @@ public function deletePerson(array $validatedRequest)
     }
 }
 
-public function personListingWithRelativeOnly($request)
+public function personListingWithRelativeOnly()
 {
     try {
 
         $user = auth('api')->user();
+
         if (!$user) {
             return ResponseHandler::error('Unauthorized user.', 401);
         }
 
-        $query = $user->persons()
+        $persons = $user->persons()
             ->with(['relative:id,name'])
-            ->select('id','name','relative_id');
-
-   
-        // return only 5 items
-        $persons = $query->limit(50)->get();
+            ->select('id','name','relative_id')
+            ->orderBy('id','desc')
+            ->limit(50)
+            ->get();
 
         return response()->json([
             'status' => 200,
