@@ -212,7 +212,6 @@ public function deletePerson(array $validatedRequest)
     }
 }
 
-
 public function getAllPersonsWithRelative()
 {
     try {
@@ -222,17 +221,17 @@ public function getAllPersonsWithRelative()
             return ResponseHandler::error('Unauthorized user.', 401);
         }
 
-        $persons = $user->persons()   // كل الأشخاص تبع نفس اليوزر
-            ->select('id', 'title', 'relative_id')
-            ->with(['relative:id,title'])
+        $persons = $user->persons()
+            ->select('id','name','relative_id')
+            ->with(['relative:id,name'])
             ->orderBy('id','desc')
             ->get();
 
         return response()->json([
             'status' => 200,
-            'code' => 8200,
-            'message' => __('common.success'),
-            'persons' => $persons
+            'code'   => 8200,
+            'message'=> __('common.success'),
+            'persons'=> $persons
         ],200);
 
     } catch (\Exception $e) {
@@ -240,6 +239,7 @@ public function getAllPersonsWithRelative()
         return ResponseHandler::error($this->prepareExceptionLog($e), 500, 26);
     }
 }
+
 
 
 

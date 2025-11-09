@@ -146,7 +146,7 @@ class PeopleController extends Controller
     }
 
 
-    public function allWithRelative(Request $request)
+    public function allWithRelative()
 {
     return $this->personRepository->getAllPersonsWithRelative();
 }
