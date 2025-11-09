@@ -32,7 +32,7 @@ class OccasionRepository
     }
 
     public function addOccasion(array $validated)
-{
+   {
     try {
         $person = People::find($validated['id']);
         if (!$person) {
@@ -57,7 +57,7 @@ class OccasionRepository
     } catch (\Exception $e) {
         return ResponseHandler::error($e->getMessage(),500,26);
     }
-}
+   }
 
 
 

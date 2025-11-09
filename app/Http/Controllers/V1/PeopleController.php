@@ -54,7 +54,7 @@ class PeopleController extends Controller
     'occasions.*.occasion_name_id' => 'required|integer|exists:occasion_names,id',
     'occasions.*.title' => 'nullable|string',
     'occasions.*.date' => 'nullable|date',
-];
+        ];
 
 
         $validated = $this->validated($rules, $request->all());
@@ -86,40 +86,40 @@ class PeopleController extends Controller
     /**
      * PUT /api/persons/{id}
      */
-  public function update($id, Request $request)
-{
-    $request->merge(['id' => $id]);
+       public function update($id, Request $request)
+        {
+            $request->merge(['id' => $id]);
 
-    $rules = [
-        'id'            => 'required|integer|exists:people,id',
-        'name'          => 'sometimes|string|max:255',
-        'birthday_date' => 'sometimes|date',
-        'gender'        => 'sometimes|string|in:male,female,other',
-        'region'        => 'sometimes|string|max:255',
-        'city'          => 'sometimes|string|max:255',
-        'address'       => 'sometimes|string|max:500',
-        'relative_id'   => 'sometimes|integer|exists:relatives,id',
+            $rules = [
+                'id'            => 'required|integer|exists:people,id',
+                'name'          => 'sometimes|string|max:255',
+                'birthday_date' => 'sometimes|date',
+                'gender'        => 'sometimes|string|in:male,female,other',
+                'region'        => 'sometimes|string|max:255',
+                'city'          => 'sometimes|string|max:255',
+                'address'       => 'sometimes|string|max:500',
+                'relative_id'   => 'sometimes|integer|exists:relatives,id',
 
-        // ✅ الاهتمامات (IDs فقط)
-        'interests'         => 'sometimes|array',
-        'interests.*'       => 'integer|exists:interests,id',
+                // ✅ الاهتمامات (IDs فقط)
+                'interests'         => 'sometimes|array',
+                'interests.*'       => 'integer|exists:interests,id',
 
-        // ✅ المناسبات (تحديث ذكي)
-        'occasions'                         => 'sometimes|array',
-        'occasions.*.occasion_name_id'      => 'required_with:occasions|integer|exists:occasion_names,id',
-        'occasions.*.title'                 => 'sometimes|string|max:255',
-        'occasions.*.date'                  => 'sometimes|date',
-        'occasions.*.type'                  => 'sometimes|string|max:100',
-    ];
+                // ✅ المناسبات (تحديث ذكي)
+                'occasions'                         => 'sometimes|array',
+                'occasions.*.occasion_name_id'      => 'required_with:occasions|integer|exists:occasion_names,id',
+                'occasions.*.title'                 => 'sometimes|string|max:255',
+                'occasions.*.date'                  => 'sometimes|date',
+                'occasions.*.type'                  => 'sometimes|string|max:100',
+            ];
 
-    $validated = $this->validated($rules, $request->all());
+            $validated = $this->validated($rules, $request->all());
 
-    if ($validated->fails()) {
-        return ResponseHandler::error(__('common.errors.validation'), 422, 2007, $validated->errors());
-    }
+            if ($validated->fails()) {
+                return ResponseHandler::error(__('common.errors.validation'), 422, 2007, $validated->errors());
+            }
 
-    return $this->personRepository->updatePerson($validated->validated());
-}
+            return $this->personRepository->updatePerson($validated->validated());
+        }
 
     /**
      * DELETE /api/persons/{id}
@@ -147,9 +147,9 @@ class PeopleController extends Controller
 
 
         public function indexWithRelativeOnly()
-{
-    return $this->personRepository->personListingWithRelativeOnly();
-}
+        {
+            return $this->personRepository->personListingWithRelativeOnly();
+        }
 
 
 

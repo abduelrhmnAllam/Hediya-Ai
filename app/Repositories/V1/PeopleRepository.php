@@ -218,7 +218,7 @@ public function personListingWithRelativeOnly()
 
     $persons = $user->persons()
         ->select('id', 'name', 'relative_id')
-        ->with('relative:id,name')
+        ->with('relative:id,title')
         ->orderBy('id','desc')
         ->limit(50)
         ->get();
@@ -227,7 +227,7 @@ public function personListingWithRelativeOnly()
         'status'=>200,
         'code'=>8200,
         'message'=>'success',
-        'persons'=>$persons
+        'reletives'=>$persons
     ]);
 }
 
