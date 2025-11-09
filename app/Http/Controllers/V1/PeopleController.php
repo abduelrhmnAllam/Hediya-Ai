@@ -146,9 +146,22 @@ class PeopleController extends Controller
     }
 
 
-    public function allWithRelative()
+    public function indexWithRelativeOnly(Request $request)
 {
-    return $this->personRepository->getAllPersonsWithRelative();
+    $validated = $this->validated([
+        'filters' => 'sometimes|array',
+        'filters.name' => 'sometimes|string',
+        'filters.gender' => 'sometimes|string',
+        'filters.city' => 'sometimes|string',
+        'order_by' => 'sometimes|in:id,name,created_at',
+        'order' => 'sometimes|in:asc,desc'
+    ], $request->all());
+
+    if ($validated->fails()) {
+        return ResponseHandler::error(__('common.errors.validation'), 422, 2001, $validated->errors());
+    }
+
+    return $this->personRepository->personListingWithRelativeOnly($request);
 }
 
 

@@ -212,7 +212,7 @@ public function deletePerson(array $validatedRequest)
     }
 }
 
-public function getAllPersonsWithRelative()
+public function personListingWithRelativeOnly($request)
 {
     try {
 
@@ -221,11 +221,26 @@ public function getAllPersonsWithRelative()
             return ResponseHandler::error('Unauthorized user.', 401);
         }
 
-        $persons = $user->persons()
-            ->select('id','name','relative_id')
+        $query = $user->persons()
             ->with(['relative:id,name'])
-            ->orderBy('id','desc')
-            ->get();
+            ->select('id','name','relative_id');
+
+        // filters (اختياري زي الأساسية)
+        if ($filters = $request->input('filters')) {
+            foreach ($filters as $field => $value) {
+                if (in_array($field, ['name', 'gender', 'city'])) {
+                    $query->where($field, 'LIKE', "%{$value}%");
+                }
+            }
+        }
+
+        // order
+        $orderBy = $request->input('order_by', 'id');
+        $order = $request->input('order', 'desc');
+        $query->orderBy($orderBy,$order);
+
+        // return only 5 items
+        $persons = $query->limit(50)->get();
 
         return response()->json([
             'status' => 200,
