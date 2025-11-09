@@ -157,7 +157,7 @@ public function createPerson(array $validatedRequest)
             foreach ($validatedRequest['occasions'] as $occasionData) {
                 $person->occasions()->updateOrCreate(
                     [
-                       
+
                         'occasion_name_id' => $occasionData['occasion_name_id'] ?? null,
                     ],
                     [
@@ -211,5 +211,36 @@ public function deletePerson(array $validatedRequest)
         return ResponseHandler::error($this->prepareExceptionLog($e), 500, 26);
     }
 }
+
+
+public function getAllPersonsWithRelative()
+{
+    try {
+
+        $user = auth('api')->user();
+        if (!$user) {
+            return ResponseHandler::error('Unauthorized user.', 401);
+        }
+
+        $persons = $user->persons()   // كل الأشخاص تبع نفس اليوزر
+            ->select('id', 'title', 'relative_id')
+            ->with(['relative:id,title'])
+            ->orderBy('id','desc')
+            ->get();
+
+        return response()->json([
+            'status' => 200,
+            'code' => 8200,
+            'message' => __('common.success'),
+            'persons' => $persons
+        ],200);
+
+    } catch (\Exception $e) {
+        $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
+        return ResponseHandler::error($this->prepareExceptionLog($e), 500, 26);
+    }
+}
+
+
 
 }

@@ -141,5 +141,15 @@ class PeopleController extends Controller
         }
 
         return $this->personRepository->deletePerson($validated->validated());
+
+
     }
+
+
+    public function allWithRelative(Request $request)
+{
+    return $this->personRepository->getAllPersonsWithRelative();
+}
+
+
 }

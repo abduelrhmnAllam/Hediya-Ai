@@ -11,9 +11,8 @@ use Illuminate\Support\Facades\Validator;
 
 class OccasionNameController extends Controller
 {
-    /**
-     * 🟢 عرض كل أنواع المناسبات (Occasion Names)
-     */
+
+    
     public function index()
     {
         $data = OccasionName::all();

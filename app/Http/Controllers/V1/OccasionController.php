@@ -37,4 +37,27 @@ class OccasionController extends Controller
     {
         return $this->occasionRepository->getPersonOccasions($personId);
     }
+
+
+    public function addNewOccassion($id, Request $request)
+        {
+            $request->merge(['id'=>$id]);
+
+    $rules = [
+        'id' => 'required|integer|exists:people,id',
+        'occasion_name_id' => 'required|integer|exists:occasion_names,id',
+        'title' => 'sometimes|string|max:255',
+        'date' => 'sometimes|date',
+        'type' => 'sometimes|string|max:100',
+    ];
+
+    $validated = $this->validated($rules,$request->all());
+    if ($validated->fails()) {
+        return ResponseHandler::error(__('common.errors.validation'),422,2007,$validated->errors());
+    }
+
+            return $this->occasionRepository->addOccasion($validated->validated());
+        }
+
+
 }

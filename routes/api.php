@@ -59,6 +59,11 @@ Route::get('google/callback', [AuthController::class, 'handleGoogleCallback']);
         Route::apiResource('projects', ProjectController::class);
         Route::apiResource('timesheets', TimesheetController::class);
             Route::apiResource('persons', PeopleController::class);
+            
+            Route::get('/persons/with-relatives', [PeopleController::class, 'allWithRelative']);
+            Route::post('/occasions/person/{id}',[OccasionController::class,'addNewOccassion']);
+
+
               Route::apiResource('occasions', OccasionController::class);
     });
 

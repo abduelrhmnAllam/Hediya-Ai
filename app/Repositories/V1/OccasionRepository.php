@@ -30,4 +30,35 @@ class OccasionRepository
         $occasions = $this->model::where('person_id', $personId)->get();
         return ResponseHandler::success($occasions, __('common.success'));
     }
+
+    public function addOccasion(array $validated)
+{
+    try {
+        $person = People::find($validated['id']);
+        if (!$person) {
+            return ResponseHandler::error(__('common.not_found'),404,2009);
+        }
+
+        $occasion = $person->occasions()->create([
+            'occasion_name_id' => $validated['occasion_name_id'],
+            'title' => $validated['title'] ?? null,
+            'date'  => $validated['date'] ?? null,
+            'type'  => $validated['type'] ?? null,
+        ]);
+
+        // load relation relative فقط
+        $person->load('relative:id,title');
+
+        return ResponseHandler::success([
+            'person'   => $person,
+            'occasion' => $occasion
+        ], __('common.success'));
+
+    } catch (\Exception $e) {
+        return ResponseHandler::error($e->getMessage(),500,26);
+    }
+}
+
+
+
 }
