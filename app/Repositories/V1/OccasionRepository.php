@@ -85,6 +85,34 @@ class OccasionRepository
     }
 }
 
+public function searchUserOccasionsByDate($userId, $date)
+{
+    try {
+        // نجيب كل الأشخاص اللي تابعين للمستخدم
+        $people = People::where('user_id', $userId)->pluck('id');
+
+        // نجيب المناسبات اللي تخص الأشخاص دي في التاريخ المطلوب
+        $occasions = $this->model::with(['person.relative'])
+            ->whereIn('person_id', $people)
+            ->whereDate('date', $date) // فلترة حسب التاريخ
+            ->orderBy('date', 'asc')
+            ->get();
+
+        return response()->json([
+            'status' => 200,
+            'code' => 8200,
+            'message' => __('common.success'),
+            'userOccasions' => $occasions
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 500,
+            'code' => 26,
+            'message' => $e->getMessage(),
+        ]);
+    }
+}
 
 
 }

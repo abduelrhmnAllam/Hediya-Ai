@@ -44,6 +44,17 @@ class OccasionController extends Controller
         return $this->occasionRepository->getUserOccasions($userId);
     }
 
+    public function searchByDate(Request $request)
+{
+    $request->validate([
+        'date' => 'required|date',
+    ]);
+
+    $userId = auth('api')->id();
+
+    return $this->occasionRepository->searchUserOccasionsByDate($userId, $request->date);
+}
+
     public function addNewOccassion($id, Request $request)
         {
             $request->merge(['id'=>$id]);
