@@ -61,22 +61,24 @@ class OccasionRepository
    }
 
    public function getUserOccasions($userId)
-    {
-        try {
-            // نجيب كل الأشخاص اللي تابعين للمستخدم
-            $people = People::where('user_id', $userId)->pluck('id');
-        
-            // نجيب كل المناسبات اللي تخص الأشخاص دي
-            $occasions = $this->model::with(['person.relative']) // لو عايز تجيب الشخص والـ relative كمان
-                ->whereIn('person_id', $people)
-                ->orderBy('date', 'asc')
-                ->get();
-        
-            return ResponseHandler::success($occasions, __('common.success'));
-        } catch (\Exception $e) {
-            return ResponseHandler::error($e->getMessage(), 500, 26);
-        }
+{
+    try {
+        // نجيب كل الأشخاص اللي تابعين للمستخدم
+        $people = People::where('user_id', $userId)->pluck('id');
+
+        // نجيب كل المناسبات اللي تخص الأشخاص دي
+        $occasions = $this->model::with(['person.relative'])
+            ->whereIn('person_id', $people)
+            ->orderBy('date', 'asc')
+            ->get();
+
+        return ResponseHandler::success(['userOccasions' => $occasions], __('common.success'));
+
+    } catch (\Exception $e) {
+        return ResponseHandler::error($e->getMessage(), 500, 26);
     }
+}
+
 
 
 }
