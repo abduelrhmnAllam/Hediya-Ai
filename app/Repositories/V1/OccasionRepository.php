@@ -72,7 +72,13 @@ class OccasionRepository
             ->orderBy('date', 'asc')
             ->get();
 
-        return ResponseHandler::success(['userOccasions' => $occasions], __('common.success'));
+       return response()->json([
+    'status' => 200,
+    'code' => 8200,
+    'message' => __('common.success'),
+    'userOccasions' => $occasions,
+]);
+
 
     } catch (\Exception $e) {
         return ResponseHandler::error($e->getMessage(), 500, 26);
