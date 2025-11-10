@@ -92,9 +92,10 @@ class OnBoardingController extends Controller
                     $q->where('name', 'LIKE', "%{$query}%")
                         ->orderByRaw("CASE WHEN name LIKE '{$query}%' THEN 1 ELSE 2 END");
                 })
-                ->select('id', 'name', 'type')
+                ->select('id', 'name', 'type' , 'background_color', 'image_background')
+
                 ->orderBy('name', 'asc')
-                ->limit(5)
+                ->limit(10)
                 ->get();
 
             return response()->json([

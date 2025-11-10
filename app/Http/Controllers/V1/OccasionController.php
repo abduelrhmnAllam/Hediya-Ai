@@ -38,11 +38,12 @@ class OccasionController extends Controller
         return $this->occasionRepository->getPersonOccasions($personId);
     }
 
-    public function GetAllOccassions()
-    {
-        $userId = auth('api')->id(); // المستخدم الحالي
-        return $this->occasionRepository->getUserOccasions($userId);
-    }
+  public function GetAllOccassions(Request $request)
+{
+    $userId = auth('api')->id(); // المستخدم الحالي
+    return $this->occasionRepository->getUserOccasions($userId);
+}
+
 
     public function searchByDate(Request $request)
 {

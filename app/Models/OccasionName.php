@@ -13,10 +13,20 @@ class OccasionName extends Model
         'name',
         'type',
         'description',
+            'background_color',
+    'image_background',
     ];
 
     public function occasions()
     {
         return $this->hasMany(Occasion::class, 'occasion_name_id');
     }
+    protected $appends = ['image_background_url'];
+
+public function getImageBackgroundUrlAttribute()
+{
+    if(!$this->image_background) return null;
+    return asset('storage/'.$this->image_background);
+}
+
 }
