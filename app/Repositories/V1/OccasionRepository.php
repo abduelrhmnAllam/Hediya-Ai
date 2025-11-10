@@ -61,37 +61,36 @@ class OccasionRepository
    }
 
    public function getUserOccasions($userId)
-{
-    try {
+    {
+        try {
 
-        $people = People::where('user_id', $userId)->pluck('id');
+    $people = People::where('user_id', $userId)->pluck('id');
 
-        $query = $this->model::with(['person.relative'])
-            ->whereIn('person_id', $people);
+    $query = $this->model::with(['person.relative','occasionName'])
+        ->whereIn('person_id', $people);
 
-        // لو في تاريخ مبعوت
-        if(request()->filled('date')){
-            $query->whereDate('date', request('date'));
-        }
-
-        // لو في عنوان مبعوت
-        if(request()->filled('title')){
-            $query->where('title', 'LIKE', '%'.request('title').'%');
-        }
-
-        $occasions = $query->orderBy('date', 'asc')->get();
-
-        return response()->json([
-            'status' => 200,
-            'code' => 8200,
-            'message' => __('common.success'),
-            'userOccasions' => $occasions,
-        ]);
-
-    } catch (\Exception $e) {
-        return ResponseHandler::error($e->getMessage(), 500, 26);
+    if(request()->filled('date')){
+        $query->whereDate('date', request('date'));
     }
+
+    if(request()->filled('title')){
+        $query->where('title', 'LIKE', '%'.request('title').'%');
+    }
+
+    $occasions = $query->orderBy('date', 'asc')->get();
+
+    return response()->json([
+        'status' => 200,
+        'code' => 8200,
+        'message' => __('common.success'),
+        'userOccasions' => $occasions,
+    ]);
+
+} catch (\Exception $e) {
+    return ResponseHandler::error($e->getMessage(), 500, 26);
 }
+
+    }
 
 
 public function searchUserOccasionsByDate($userId, $date)
