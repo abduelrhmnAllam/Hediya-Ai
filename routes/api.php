@@ -62,7 +62,10 @@ Route::get('google/callback', [AuthController::class, 'handleGoogleCallback']);
 
                 });
 
-              Route::get('/Persons/occasions', [OccasionController::class, 'GetAllOccassions']);
+       Route::get('/occasions/filter/{type}', [OccasionController::class, 'GetAllOccassions'])
+    ->where('type','all|past|upcoming');
+
+
           //     Route::get('/Persons/occasions/search', [OccasionController::class, 'searchByDate']);
                 Route::get('/occasions/upcoming',[OccasionController::class,'getUpcomingOccasions']);
                 Route::get('/occasions/past',[OccasionController::class,'getPastOccasions']);

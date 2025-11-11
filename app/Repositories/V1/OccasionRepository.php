@@ -34,7 +34,7 @@ class OccasionRepository
 
     public function addOccasion(array $validated)
     {
-    try {
+          try {
         $person = People::find($validated['id']);
         if (!$person) {
             return ResponseHandler::error(__('common.not_found'),404,2009);
@@ -55,14 +55,14 @@ class OccasionRepository
             'occasion' => $occasion
         ], __('common.success'));
 
-    } catch (\Exception $e) {
-        return ResponseHandler::error($e->getMessage(),500,26);
+          } catch (\Exception $e) {
+              return ResponseHandler::error($e->getMessage(),500,26);
+          }
     }
-   }
 
 
       public function updateOccasionForPerson($person_id, $occasion_id, $data)
-        {
+    {
     try {
 
         $occasion = $this->model::where('id', $occasion_id)
@@ -117,121 +117,161 @@ public function deleteOccasionForPerson($person_id, $occasion_id)
 }
 
 
-
-
-
-
-
-
-       public function getUserOccasions($userId)
-    {
-        try {
-
-    $people = People::where('user_id', $userId)->pluck('id');
+public function searchByDateRange($userId,$request)
+{
+    $people = People::where('user_id',$userId)->pluck('id');
 
     $query = $this->model::with(['person.relative','occasionName'])
-        ->whereIn('person_id', $people);
+        ->whereIn('person_id',$people);
 
-    if(request()->filled('date')){
-        $query->whereDate('date', request('date'));
+    if($request->from_date){
+        $query->whereDate('date','>=',$request->from_date);
     }
 
-    if(request()->filled('title')){
-        $query->where('title', 'LIKE', '%'.request('title').'%');
+    if($request->to_date){
+        $query->whereDate('date','<=',$request->to_date);
     }
 
-    $occasions = $query->orderBy('date', 'asc')->get();
+   if($request->filled('title')){
+        $query->where('title','LIKE','%'.$request->title.'%');
+    }
+
+    return ResponseHandler::success(['userOccasions'=>$query->get()]);
+}
+
+  public function searchSmart($userId,$type,$request)
+{
+    $peopleIDs = People::where('user_id',$userId)->pluck('id');
+
+    $query = $this->model::with(['person.relative','occasionName'])
+        ->whereIn('person_id',$peopleIDs);
+
+    // --- 1) TYPE FILTER ---
+    switch(strtolower(trim($type)))
+    {
+        case 'upcoming':
+            $query->whereDate('date','>=', today());
+            break;
+
+        case 'past':
+            $query->whereDate('date','<', today());
+            break;
+
+        case 'all':
+            break;
+
+        default:
+            return ResponseHandler::error('Invalid type',422,2008);
+    }
+
+    // --- 2) DATE RANGE OVERRIDE ---
+    if($request->filled('from_date')){
+        $query->whereDate('date','>=',$request->from_date);
+    }
+
+    if($request->filled('to_date')){
+        $query->whereDate('date','<=',$request->to_date);
+    }
+
+    // --- 3) TITLE FILTER SMART ---
+    if($request->filled('title')){
+        $clean = preg_replace('/[^\p{L}\p{N}\s]/u','', $request->title);
+        $clean = trim(mb_strtolower($clean));
+        $words = explode(' ',$clean);
+
+        foreach($words as $w){
+            if($w!=''){
+                $query->whereRaw("LOWER(title) LIKE ?",['%'.$w.'%']);
+            }
+        }
+    }
+
+    $occasions = $query->orderBy('date','asc')->get();
 
     return response()->json([
         'status' => 200,
-        'code' => 8200,
-        'message' => __('common.success'),
-        'userOccasions' => $occasions,
+        'code'   => 8200,
+        'message'=> __('common.success'),
+        'userOccasions' => $occasions
     ]);
-
-    } catch (\Exception $e) {
-        return ResponseHandler::error($e->getMessage(), 500, 26);
-    }
-
-        }
-
-
-public function searchUserOccasionsByDate($userId, $date)
-{
-    try {
-        // نجيب كل الأشخاص اللي تابعين للمستخدم
-        $people = People::where('user_id', $userId)->pluck('id');
-
-        // نجيب المناسبات اللي تخص الأشخاص دي في التاريخ المطلوب
-        $occasions = $this->model::with(['person.relative'])
-            ->whereIn('person_id', $people)
-            ->whereDate('date', $date) // فلترة حسب التاريخ
-            ->orderBy('date', 'asc')
-            ->get();
-
-        return response()->json([
-            'status' => 200,
-            'code' => 8200,
-            'message' => __('common.success'),
-            'userOccasions' => $occasions
-        ]);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'status' => 500,
-            'code' => 26,
-            'message' => $e->getMessage(),
-        ]);
-    }
 }
 
+    public function searchUserOccasionsByDate($userId, $date)
+    {
+          try {
+              // نجيب كل الأشخاص اللي تابعين للمستخدم
+              $people = People::where('user_id', $userId)->pluck('id');
 
-public function getUpcoming($userId)
-{
-    try{
-        $people = People::where('user_id',$userId)->pluck('id');
+              // نجيب المناسبات اللي تخص الأشخاص دي في التاريخ المطلوب
+              $occasions = $this->model::with(['person.relative'])
+                  ->whereIn('person_id', $people)
+                  ->whereDate('date', $date) // فلترة حسب التاريخ
+                  ->orderBy('date', 'asc')
+                  ->get();
 
-        $start = now()->format('Y-m-d');
-        $end   = now()->addDays(10)->format('Y-m-d');
+              return response()->json([
+                  'status' => 200,
+                  'code' => 8200,
+                  'message' => __('common.success'),
+                  'userOccasions' => $occasions
+              ]);
 
-        $occasions = $this->model::with(['person.relative','occasionName'])
-            ->whereIn('person_id',$people)
-            ->whereBetween('date',[$start,$end])
-            ->orderBy('date','asc')
-            ->get();
-
-        return ResponseHandler::success([
-            'userOccasions'=>$occasions
-        ], __('common.success'));
-
-    }catch(\Exception $e){
-        return ResponseHandler::error($e->getMessage(),500,26);
+          } catch (\Exception $e) {
+              return response()->json([
+                  'status' => 500,
+                  'code' => 26,
+                  'message' => $e->getMessage(),
+              ]);
+          }
     }
-}
 
 
-public function getPast($userId)
-{
-    try{
-        $people = People::where('user_id',$userId)->pluck('id');
+    public function getUpcoming($userId)
+    {
+         try{
+             $people = People::where('user_id',$userId)->pluck('id');
 
-        $start = now()->subDays(10)->format('Y-m-d');
-        $end   = now()->format('Y-m-d');
+             $start = now()->format('Y-m-d');
+             $end   = now()->addDays(10)->format('Y-m-d');
 
-        $occasions = $this->model::with(['person.relative','occasionName'])
-            ->whereIn('person_id',$people)
-            ->whereBetween('date',[$start,$end])
-            ->orderBy('date','asc')
-            ->get();
+             $occasions = $this->model::with(['person.relative','occasionName'])
+                 ->whereIn('person_id',$people)
+                 ->whereBetween('date',[$start,$end])
+                 ->orderBy('date','asc')
+                 ->get();
 
-        return ResponseHandler::success([
-            'userOccasions'=>$occasions
-        ], __('common.success'));
+             return ResponseHandler::success([
+                 'userOccasions'=>$occasions
+             ], __('common.success'));
 
-    }catch(\Exception $e){
-        return ResponseHandler::error($e->getMessage(),500,26);
+         }catch(\Exception $e){
+             return ResponseHandler::error($e->getMessage(),500,26);
+         }
     }
-}
+
+
+    public function getPast($userId)
+    {
+         try{
+             $people = People::where('user_id',$userId)->pluck('id');
+
+             $start = now()->subDays(10)->format('Y-m-d');
+             $end   = now()->format('Y-m-d');
+
+             $occasions = $this->model::with(['person.relative','occasionName'])
+                 ->whereIn('person_id',$people)
+                 ->whereBetween('date',[$start,$end])
+                 ->orderBy('date','asc')
+                 ->get();
+
+             return ResponseHandler::success([
+                 'userOccasions'=>$occasions
+             ], __('common.success'));
+
+         }catch(\Exception $e){
+             return ResponseHandler::error($e->getMessage(),500,26);
+         }
+    }
 
 
 }

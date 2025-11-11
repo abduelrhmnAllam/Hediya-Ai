@@ -38,11 +38,30 @@ class OccasionController extends Controller
         return $this->occasionRepository->getPersonOccasions($personId);
     }
 
-  public function GetAllOccassions(Request $request)
+
+    public function GetAllOccassions(Request $request, $type)
 {
-    $userId = auth('api')->id(); // المستخدم الحالي
-    return $this->occasionRepository->getUserOccasions($userId);
+    $validated = $this->validated([
+        'title'     => 'sometimes|string',
+        'from_date' => 'sometimes|date',
+        'to_date'   => 'sometimes|date',
+    ], $request->all());
+
+    if ($validated->fails()) {
+        return ResponseHandler::error(__('common.errors.validation'), 422, 2001, $validated->errors());
+    }
+
+    if(! in_array($type, ['upcoming','past','all'])){
+        return ResponseHandler::error('Invalid type value',422,2001,[
+            'type' => ['type must be: upcoming, past, all']
+        ]);
+    }
+
+    $userId = auth('api')->id();
+
+    return $this->occasionRepository->searchSmart($userId, $type, $request);
 }
+
 
 
     public function searchByDate(Request $request)
