@@ -56,6 +56,23 @@ class OccasionController extends Controller
     return $this->occasionRepository->searchUserOccasionsByDate($userId, $request->date);
 }
 
+
+    public function getUpcomingOccasions(Request $request)
+{
+    $userId = auth('api')->id();
+
+    return $this->occasionRepository->getUpcoming($userId);
+}
+
+public function getPastOccasions(Request $request)
+{
+    $userId = auth('api')->id();
+
+    return $this->occasionRepository->getPast($userId);
+}
+
+
+
     public function addNewOccassion($id, Request $request)
         {
             $request->merge(['id'=>$id]);
@@ -75,6 +92,29 @@ class OccasionController extends Controller
 
             return $this->occasionRepository->addOccasion($validated->validated());
         }
+
+    public function updatePersonOccasion($person_id, $occasion_id, Request $request)
+{
+    $rules = [
+        'occasion_name_id' => 'sometimes|integer|exists:occasion_names,id',
+        'title' => 'sometimes|string|max:255',
+        'date' => 'sometimes|date',
+        'type' => 'sometimes|string|max:100',
+    ];
+
+    $validated = $this->validated($rules,$request->all());
+    if ($validated->fails()) {
+        return ResponseHandler::error(__('common.errors.validation'),422,2007,$validated->errors());
+    }
+
+    return $this->occasionRepository->updateOccasionForPerson($person_id, $occasion_id, $validated->validated());
+}
+
+
+public function deletePersonOccasion($person_id, $occasion_id)
+{
+    return $this->occasionRepository->deleteOccasionForPerson($person_id, $occasion_id);
+}
 
 
 }

@@ -53,10 +53,21 @@ Route::get('google/callback', [AuthController::class, 'handleGoogleCallback']);
     Route::get('allOccasions', [OnBoardingController::class, 'occasions']);
 
             Route::get('/persons/with-relatives',[PeopleController::class,'indexWithRelativeOnly']);
-            Route::post('/occasions/person/{id}',[OccasionController::class,'addNewOccassion']);
+// to create new occasion for person (Events/Occasions)
+               Route::prefix('persons/{person_id}/occasions')->group(function() {
+
+                         Route::post('/', [OccasionController::class, 'addNewOccassion']);
+                         Route::put('{occasion_id}', [OccasionController::class, 'updatePersonOccasion']);
+                         Route::delete('{occasion_id}', [OccasionController::class, 'deletePersonOccasion']);
+
+                });
+
               Route::get('/Persons/occasions', [OccasionController::class, 'GetAllOccassions']);
-               Route::get('/Persons/occasions/search', [OccasionController::class, 'searchByDate']);
-       Route::post('logout', [AuthController::class, 'logout']);
+          //     Route::get('/Persons/occasions/search', [OccasionController::class, 'searchByDate']);
+                Route::get('/occasions/upcoming',[OccasionController::class,'getUpcomingOccasions']);
+                Route::get('/occasions/past',[OccasionController::class,'getPastOccasions']);
+
+               Route::post('logout', [AuthController::class, 'logout']);
 
         // CRUD for Users, Projects, Timesheets
         Route::apiResource('users', UserController::class);
