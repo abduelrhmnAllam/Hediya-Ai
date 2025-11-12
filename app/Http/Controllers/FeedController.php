@@ -35,7 +35,6 @@ class FeedController extends Controller
 }
 
 
-
 public function importUpload(Request $request, XmlImporter $importer)
 {
     $request->validate([
@@ -54,11 +53,19 @@ public function importUpload(Request $request, XmlImporter $importer)
         ]
     );
 
-    // pass EXACT string path eg: tmp_feeds/xxxx.xml
+    // ✅ تحقق من وجود الملف فعلاً
+    $filePath = public_path($request->uploaded_file);
+
+    if (!file_exists($filePath)) {
+        return back()->with('error', "XML file missing: {$filePath}");
+    }
+
+    // ✅ شغل الاستيراد
     $run = $importer->import($request->uploaded_file, $feed);
 
     return back()->with('success',"Imported! FeedRun #{$run->id}");
 }
+
 
 
 }

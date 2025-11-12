@@ -43,55 +43,59 @@ class XmlImporter
 
  public function import(string $filePath, Feed $feed): FeedRun
 {
-   // resolve actual file path (UI upload OR CLI)
-if (str_starts_with($filePath,'/') || str_starts_with($filePath,'C:\\')) {
-    // absolute path passed (controller gave full path)
-    $xmlPath = $filePath;
-} elseif (str_starts_with($filePath,'tmp_feeds/')) {
-    // uploaded via web tmp_feeds/
-    $xmlPath = public_path($filePath);
-} else {
-    // relative storage path
-    $xmlPath = storage_path('app/'.$filePath);
-}
+    // ✅ 0) تأكد أن المسار فعلي ومش فاضي أو undefined
+    if (empty($filePath) || $filePath === 'undefined' || $filePath === 'null') {
+        throw new \RuntimeException("XML file path is missing or invalid. Given: '{$filePath}'");
+    }
 
-// file must exist physically here
-if (!file_exists($xmlPath)) {
-    throw new \RuntimeException("XML file missing: ".$xmlPath);
-}
+    // ✅ 1) تحديد المسار الفعلي
+    if (str_starts_with($filePath, '/') || str_starts_with($filePath, 'C:\\')) {
+        // absolute path (CLI أو مسار كامل)
+        $xmlPath = $filePath;
 
+    } elseif (str_starts_with($filePath, 'tmp_feeds/')) {
+        // uploaded via web tmp_feeds/
+        $xmlPath = public_path($filePath);
 
-    // handle .gz etc
+    } else {
+        // relative storage path
+        $xmlPath = storage_path('app/'.$filePath);
+    }
+
+    // ✅ 2) تأكد أن الملف فعلاً موجود
+    if (!file_exists($xmlPath)) {
+        throw new \RuntimeException("XML file missing: " . $xmlPath);
+    }
+
+    // ✅ 3) معالجة أي ملفات مضغوطة (.gz)
     $xmlPath = $this->ensureXmlFile($xmlPath);
 
+    // ✅ 4) إنشاء سجل FeedRun
     $fileHash = @hash_file('sha1', $xmlPath) ?: null;
 
     $run = FeedRun::create([
         'feed_id'    => $feed->id,
         'file_name'  => basename($filePath),
         'file_hash'  => $fileHash,
-        'meta'       => ['source'=>'xml','path'=>$xmlPath],
+        'meta'       => ['source' => 'xml', 'path' => $xmlPath],
         'imported_at'=> now(),
     ]);
 
-    $xr = new XMLReader();
+    // ✅ 5) قراءة الملف باستخدام XMLReader
+    $xr = new \XMLReader();
     if (!$xr->open($xmlPath, null, LIBXML_NOWARNING | LIBXML_NOERROR)) {
-        throw new \RuntimeException("Cannot open XML: ".$xmlPath);
+        throw new \RuntimeException("Cannot open XML: " . $xmlPath);
     }
 
-    // 1) Parse categories
+    // --- 1) Parse Categories ---
     $this->parseCategories($xr, $feed);
 
-    // 2) Parse offers
+    // --- 2) Parse Offers ---
     $xr->close();
     $xr->open($xmlPath, null, LIBXML_NOWARNING | LIBXML_NOERROR);
 
-    $batch = [];
-    $batchSize = 200;
-    $inserted = 0;
-
     while ($xr->read()) {
-        if ($xr->nodeType === XMLReader::ELEMENT && $xr->name === 'offer') {
+        if ($xr->nodeType === \XMLReader::ELEMENT && $xr->name === 'offer') {
             $node = $this->expandNode($xr);
             $data = $this->parseOffer($node);
 
@@ -102,8 +106,11 @@ if (!file_exists($xmlPath)) {
     }
 
     $xr->close();
+
+    // ✅ 6) إرجاع السجل النهائي
     return $run;
 }
+
 
 
 
