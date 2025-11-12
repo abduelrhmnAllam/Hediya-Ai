@@ -61,31 +61,50 @@ class OccasionRepository
     }
 
 
-      public function updateOccasionForPerson($person_id, $occasion_id, $data)
-    {
-    try {
 
+    public function updateOccasionForPerson($person_id, $occasion_id, $data)
+{
+    try {
         $occasion = $this->model::where('id', $occasion_id)
             ->where('person_id', $person_id)
             ->with('person.relative')
             ->first();
 
-        if(!$occasion){
-            return ResponseHandler::error(__('common.not_found'),404,2009);
+        if (!$occasion) {
+            return ResponseHandler::error(__('common.not_found'), 404, 2009);
         }
 
-        $occasion->update($data);
-        $occasion->person->load('relative:id,title');
+        // ✅ لو فيه relative_id في البيانات، نحدث الشخص أولاً
+        if (isset($data['relative_id'])) {
+            $person = $occasion->person;
+            if ($person) {
+                $person->relative_id = $data['relative_id'];
+                $person->save();
+            }
+            unset($data['relative_id']); // نمنع دخوله لتحديث المناسبة نفسها
+        }
 
-        return ResponseHandler::success([
-            'person'   => $occasion->person,
+        // ✅ نحدّث بيانات المناسبة نفسها
+        $occasion->update($data);
+
+        // ✅ نرجّع البيانات بعد التحميل الكامل
+       $occasion->load('person.relative');
+
+        $person = $occasion->person;
+        return response()->json([
+    'status'  => 200,
+    'code'    => 8200,
+    'message' => __('common.success'),
+    'person'   => $person,
             'occasion' => $occasion
-        ], __('common.success'));
+]);
+    
 
     } catch (\Exception $e) {
-        return ResponseHandler::error($e->getMessage(),500,26);
+        return ResponseHandler::error($e->getMessage(), 500, 26);
     }
-        }
+}
+
 
 
 public function deleteOccasionForPerson($person_id, $occasion_id)
@@ -139,54 +158,56 @@ public function searchByDateRange($userId,$request)
     return ResponseHandler::success(['userOccasions'=>$query->get()]);
 }
 
-  public function searchSmart($userId,$type,$request)
+   public function searchSmart($userId, $type, $request)
 {
-    $peopleIDs = People::where('user_id',$userId)->pluck('id');
+    $peopleIDs = People::where('user_id', $userId)->pluck('id');
 
-    $query = $this->model::with(['person.relative','occasionName'])
-        ->whereIn('person_id',$peopleIDs);
+    $query = $this->model::with(['person.relative', 'occasionName'])
+        ->whereIn('person_id', $peopleIDs);
 
-    // --- 1) TYPE FILTER ---
-    switch(strtolower(trim($type)))
-    {
+    // --- (1) نوع المناسبات ---
+    switch (strtolower(trim($type))) {
         case 'upcoming':
-            $query->whereDate('date','>=', today());
+            $query->whereDate('date', '>=', today());
             break;
 
         case 'past':
-            $query->whereDate('date','<', today());
+            $query->whereDate('date', '<', today());
             break;
 
         case 'all':
+            // no filter
             break;
 
         default:
-            return ResponseHandler::error('Invalid type',422,2008);
+            return ResponseHandler::error('Invalid type', 422, 2008);
     }
 
-    // --- 2) DATE RANGE OVERRIDE ---
-    if($request->filled('from_date')){
-        $query->whereDate('date','>=',$request->from_date);
+    // --- (2) فلترة التاريخ لو موجود ---
+    if ($request->filled('from_date') && !empty($request->from_date)) {
+        $query->whereDate('date', '>=', $request->from_date);
     }
 
-    if($request->filled('to_date')){
-        $query->whereDate('date','<=',$request->to_date);
+    if ($request->filled('to_date') && !empty($request->to_date)) {
+        $query->whereDate('date', '<=', $request->to_date);
     }
 
-    // --- 3) TITLE FILTER SMART ---
-    if($request->filled('title')){
-        $clean = preg_replace('/[^\p{L}\p{N}\s]/u','', $request->title);
+    // --- (3) فلترة العنوان الذكي ---
+    if ($request->filled('title') && !empty(trim($request->title))) {
+        $clean = preg_replace('/[^\p{L}\p{N}\s]/u', '', $request->title);
         $clean = trim(mb_strtolower($clean));
-        $words = explode(' ',$clean);
+        $words = explode(' ', $clean);
 
-        foreach($words as $w){
-            if($w!=''){
-                $query->whereRaw("LOWER(title) LIKE ?",['%'.$w.'%']);
+        $query->where(function($q) use ($words) {
+            foreach ($words as $w) {
+                if ($w != '') {
+                    $q->orWhereRaw("LOWER(title) LIKE ?", ['%'.$w.'%']);
+                }
             }
-        }
+        });
     }
 
-    $occasions = $query->orderBy('date','asc')->get();
+    $occasions = $query->orderBy('date', 'asc')->get();
 
     return response()->json([
         'status' => 200,
@@ -195,6 +216,7 @@ public function searchByDateRange($userId,$request)
         'userOccasions' => $occasions
     ]);
 }
+
 
     public function searchUserOccasionsByDate($userId, $date)
     {

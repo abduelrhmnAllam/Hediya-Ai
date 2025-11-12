@@ -39,20 +39,21 @@ class OccasionController extends Controller
     }
 
 
-    public function GetAllOccassions(Request $request, $type)
+   public function GetAllOccassions(Request $request, $type)
 {
+    // ✅ استخدم sometimes بدل null عشان ما يفشل التحقق لما الحقل مش موجود
     $validated = $this->validated([
-        'title'     => 'sometimes|string',
-        'from_date' => 'sometimes|date',
-        'to_date'   => 'sometimes|date',
+         'title'     => 'nullable|string',
+    'from_date' => 'nullable',
+    'to_date'   => 'nullable',
     ], $request->all());
 
     if ($validated->fails()) {
         return ResponseHandler::error(__('common.errors.validation'), 422, 2001, $validated->errors());
     }
 
-    if(! in_array($type, ['upcoming','past','all'])){
-        return ResponseHandler::error('Invalid type value',422,2001,[
+    if (! in_array($type, ['upcoming', 'past', 'all'])) {
+        return ResponseHandler::error('Invalid type value', 422, 2001, [
             'type' => ['type must be: upcoming, past, all']
         ]);
     }
@@ -112,22 +113,28 @@ public function getPastOccasions(Request $request)
             return $this->occasionRepository->addOccasion($validated->validated());
         }
 
-    public function updatePersonOccasion($person_id, $occasion_id, Request $request)
+   public function updatePersonOccasion($person_id, $occasion_id, Request $request)
 {
     $rules = [
         'occasion_name_id' => 'sometimes|integer|exists:occasion_names,id',
         'title' => 'sometimes|string|max:255',
         'date' => 'sometimes|date',
         'type' => 'sometimes|string|max:100',
+        'relative_id' => 'sometimes|integer|exists:relatives,id', // ✅ مضاف حديثًا
     ];
 
-    $validated = $this->validated($rules,$request->all());
+    $validated = $this->validated($rules, $request->all());
     if ($validated->fails()) {
-        return ResponseHandler::error(__('common.errors.validation'),422,2007,$validated->errors());
+        return ResponseHandler::error(__('common.errors.validation'), 422, 2007, $validated->errors());
     }
 
-    return $this->occasionRepository->updateOccasionForPerson($person_id, $occasion_id, $validated->validated());
+    return $this->occasionRepository->updateOccasionForPerson(
+        $person_id,
+        $occasion_id,
+        $validated->validated()
+    );
 }
+
 
 
 public function deletePersonOccasion($person_id, $occasion_id)

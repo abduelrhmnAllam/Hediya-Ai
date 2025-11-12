@@ -2,10 +2,22 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="verify-admitad" content="a6dab9fb35" />
     <title>الفئات والمنتجات</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: "Tajawal", sans-serif;
+        }
+        .accordion-button {
+            background-color: #fff;
+            font-weight: 600;
+        }
+        .accordion-button:not(.collapsed) {
+            background-color: #e9f5ff;
+            color: #0d6efd;
+        }
         .product-card {
             width: 220px;
             flex: 0 0 auto;
@@ -34,127 +46,138 @@
             background-color: #0d6efd;
             color: white;
         }
+        .card-title {
+            font-size: 14px;
+            min-height: 38px;
+        }
     </style>
 </head>
-<body class="bg-light">
+<body>
 
-<div class="container py-4">
-    <h2 class="text-center mb-4">🛍️ تصفح الفئات والمنتجات</h2>
+<div class="container py-5">
+    <h2 class="text-center mb-5">🛍️ تصفح الفئات والمنتجات</h2>
 
     <div class="accordion" id="categoriesAccordion">
         @foreach ($categories as $category)
-            @include('partials.category-node', ['category' => $category, 'level' => 0])
+            <div class="accordion-item mb-3 shadow-sm">
+                <h2 class="accordion-header" id="heading-{{ $category->id }}">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapse-{{ $category->id }}" aria-expanded="false"
+                            aria-controls="collapse-{{ $category->id }}" data-category-id="{{ $category->id }}">
+                        {{ $category->name }}
+                    </button>
+                </h2>
+                <div id="collapse-{{ $category->id }}" class="accordion-collapse collapse"
+                     aria-labelledby="heading-{{ $category->id }}" data-bs-parent="#categoriesAccordion">
+                    <div class="accordion-body" id="products-container-{{ $category->id }}">
+                        <p class="text-info">⏳ جاري تحميل البيانات...</p>
+                    </div>
+                </div>
+            </div>
         @endforeach
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', async () => {
-    const accordionItems = document.querySelectorAll('.accordion-item');
-
-    for (const item of accordionItems) {
-        const button = item.querySelector('.accordion-button');
-        const collapse = item.querySelector('.accordion-collapse');
-        const categoryId = button?.dataset.categoryId;
-        const container = document.getElementById('products-container-' + categoryId);
-
-        if (!categoryId || !container) continue;
-
-       
-        collapse.classList.add('show');
-        button.classList.remove('collapsed');
-        button.setAttribute('aria-expanded', 'true');
 
 
-        container.innerHTML = '<p class="text-info">⏳ جاري تحميل الفئات والمنتجات...</p>';
+    <script>
+document.addEventListener('DOMContentLoaded', () => {
+    const accordionButtons = document.querySelectorAll('.accordion-button');
 
-        try {
-            const response = await fetch(`/categories/${categoryId}/tree`);
-            if (!response.ok) {
-                container.innerHTML = '<p class="text-danger">⚠️ حدث خطأ أثناء تحميل البيانات.</p>';
-                continue;
-            }
+    accordionButtons.forEach(button => {
+        button.addEventListener('click', async () => {
+            const categoryId = button.dataset.categoryId;
+            const container = document.getElementById(`products-container-${categoryId}`);
 
-            const data = await response.json();
-            const subcategories = data.category.children || [];
-            const products = data.category.products || [];
+            // 🧠 لو اتحمل قبل كده، ما يعيدش التحميل
+            if (!categoryId || !container || container.dataset.loaded) return;
 
-            let html = '';
+            container.innerHTML = '<p class="text-info">⏳ جاري تحميل الفئات والمنتجات...</p>';
 
+            try {
+                const response = await fetch(`/categories/${categoryId}/tree`);
+                if (!response.ok) throw new Error("Response not OK");
 
-            if (subcategories.length > 0) {
-                html += '<div class="ms-3">';
-                subcategories.forEach(sub => {
-                    html += `
-                        <div class="border rounded p-2 mb-2 bg-white shadow-sm">
-                            <strong>${sub.name}</strong>
-                            <div id="sub-${sub.id}" class="ms-3 text-muted">اضغط لعرض التفاصيل...</div>
-                        </div>
-                    `;
-                });
-                html += '</div>';
-            }
+                const data = await response.json();
+                const subcategories = data.category.children || [];
+                const feeds = data.category.feeds || {}; // ← المنتجات مجمعة حسب الـ Feed
 
+                let html = '';
 
-            if (products.length > 0) {
-                html += `
-                    <hr>
-                    <h6 class="mb-3">🛒 المنتجات:</h6>
-                    <div class="products-slider">
-                `;
+                // 📂 الفئات الفرعية
+                if (subcategories.length > 0) {
+                    html += `<h6 class="mb-2">📂 الفئات الفرعية:</h6><ul>`;
+                    subcategories.forEach(sub => {
+                        html += `<li>${sub.name}</li>`;
+                    });
+                    html += `</ul><hr>`;
+                }
 
-                products.forEach(p => {
-                    let images = [];
-                    try {
-                        if (typeof p.pictures === 'string') {
-                            images = JSON.parse(p.pictures);
-                            if (typeof images === 'string') images = JSON.parse(images);
-                        } else if (Array.isArray(p.pictures)) {
-                            images = p.pictures;
-                        }
-                    } catch (e) {
-                        console.error('خطأ أثناء فك الصور:', e);
-                    }
+                // 🛍️ المنتجات حسب كل Feed
+                if (Object.keys(feeds).length > 0) {
+                    for (const [feedName, products] of Object.entries(feeds)) {
+                        html += `
+                            <h5 class="mt-4 mb-3 text-primary fw-bold">
+                                🛒 ${feedName}
+                            </h5>
+                            <div class="products-slider">
+                        `;
 
-                    html += `
-                        <div class="product-card card shadow-sm">
-                            ${images && images.length > 0
-                                ? `<img src="${images[0].replace(/\\\//g, '/')}" class="card-img-top" alt="${p.name}" style="height:150px;object-fit:cover;">`
-                                : `<div class="bg-secondary text-white text-center p-5">No Image</div>`}
-                            <div class="card-body text-center">
-                                <h6 class="card-title">${p.name}</h6>
-                               <p class="text-success fw-bold mb-2">
-                                  ${Number(String(p.price).replace(/,/g, '')).toFixed(2)} ${p.currency_id}
-                                </p>
+                        products.forEach(p => {
+                            // ✅ الصورة
+                            const imageUrl = Array.isArray(p.pictures) && p.pictures.length > 0 ? p.pictures[0] : '';
 
-                                <div class="d-flex justify-content-center gap-2">
-                                    <a href="${p.url}" target="_blank" class="btn btn-sm btn-buy">🛒 اشتري الآن</a>
-                                    <a href="/products/${p.id}" class="btn btn-sm btn-details">🔍 تفاصيل</a>
+                            // ✅ السعر (مع معالجة الفواصل)
+                            let priceValue = p.price ?? 0;
+                            if (typeof priceValue === "string") {
+                                priceValue = priceValue.replace(/,/g, ''); // إزالة الفواصل
+                            }
+                            const price = parseFloat(priceValue) || 0;
+
+                            // ✅ العملة و SKU
+                            const currency = p.currency_id ?? p.currency ?? 'EGP';
+                            const sku = p.sku ?? 'غير متوفر';
+
+                            // ✅ بناء الكارت
+                            html += `
+                                <div class="product-card card shadow-sm">
+                                    ${imageUrl
+                                        ? `<img src="${imageUrl}" class="card-img-top" alt="${p.name}" style="height:150px;object-fit:cover;">`
+                                        : `<div class="bg-secondary text-white text-center p-5">لا توجد صورة</div>`}
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title">${p.name}</h6>
+                                        <p class="text-success fw-bold mb-2">
+                                            ${price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${currency}
+                                        </p>
+                                        <small class="text-muted d-block mb-2">SKU: ${sku}</small>
+                                        <div class="d-flex justify-content-center gap-2">
+                                            <a href="${p.url ?? '#'}" target="_blank" class="btn btn-sm btn-buy">🛒 اشتري الآن</a>
+                                            <a href="/products/${p.id}" class="btn btn-sm btn-details">🔍 تفاصيل</a>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                    `;
-                });
+                            `;
+                        });
 
-                html += '</div>';
+                        html += `</div><hr>`;
+                    }
+                } else {
+                    html += '<p class="text-muted">لا توجد منتجات متاحة في هذه الفئة.</p>';
+                }
+
+                // ✅ عرض المحتوى
+                container.innerHTML = html;
+                container.dataset.loaded = true;
+
+            } catch (error) {
+                console.error('❌ خطأ أثناء تحميل البيانات:', error);
+                container.innerHTML = '<p class="text-danger">⚠️ حدث خطأ أثناء تحميل البيانات.</p>';
             }
-
-
-            if (!subcategories.length && !products.length) {
-                html = '<p class="text-muted">لا توجد فئات فرعية أو منتجات.</p>';
-            }
-
-            container.innerHTML = html;
-            container.dataset.loaded = true;
-        } catch (error) {
-            console.error('❌ خطأ أثناء تحميل البيانات:', error);
-            container.innerHTML = '<p class="text-danger">⚠️ حدث خطأ أثناء تحميل البيانات.</p>';
-        }
-    }
+        });
+    });
 });
 </script>
-
 
 
 </body>

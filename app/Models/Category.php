@@ -1,22 +1,19 @@
 <?php
-
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Category extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
-        'external_id',
+        'supplier_guid',
         'name',
         'slug',
         'parent_id',
+        'extra',
     ];
 
-   public function parent()
+    public function parent()
     {
         return $this->belongsTo(Category::class, 'parent_id');
     }
@@ -28,6 +25,7 @@ class Category extends Model
 
     public function products()
     {
-        return $this->hasMany(Product::class, 'category_id');
+        // حسب العلاقة اللي عندك في قاعدة البيانات، غالباً many-to-many
+        return $this->belongsToMany(Product::class, 'product_categories', 'category_id', 'product_id');
     }
 }

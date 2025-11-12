@@ -2,41 +2,21 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
-        'external_id',
-        'available',
-        'category_id',
-        'currency_id',
-        'name',
-        'description',
-        'price',
-        'old_price',
-        'vendor',
-        'url',
-        'pictures',
-        'identifier_exists',
-        'modified_time',
+        'brand_id','name','original_name','fingerprint','master_sku',
+        'short_description','long_description','material','gender','status','attributes'
     ];
 
-    protected $casts = [
-        'available' => 'boolean',
-        'pictures' => 'array',
-        'price' => 'decimal:2',
-        'old_price' => 'decimal:2',
-    ];
+    protected $casts = ['attributes'=>'array'];
 
-    /**
-     * 🔗 العلاقة مع الفئة
-     */
-    public function category()
-    {
-        return $this->belongsTo(Category::class, 'category_id');
-    }
+    public function brand(){ return $this->belongsTo(Brand::class); }
+    public function images(){ return $this->hasMany(ProductImage::class); }
+    public function colors(){ return $this->hasMany(ProductColor::class); }
+    public function sizes(){ return $this->hasMany(ProductSize::class); }
+    public function categories(){ return $this->belongsToMany(Category::class, 'product_categories'); }
+    public function feedItems(){ return $this->hasMany(FeedProduct::class); }
 }
