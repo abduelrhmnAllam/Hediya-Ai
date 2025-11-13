@@ -30,3 +30,5 @@ Route::post('/feeds/import', [FeedController::class, 'importUpload']);
 Route::post('/feeds/upload', [FeedController::class, 'uploadFile']);
 Route::get('/feeds/runs', [FeedRunController::class, 'index']);
 Route::get('/feeds/runs/{run}', [FeedRunController::class, 'show']);
+Route::delete('/feeds/runs/{run}', [FeedRunController::class, 'destroy']);
+

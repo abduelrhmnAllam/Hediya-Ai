@@ -18,43 +18,93 @@ class PeopleRepository extends BaseRepository
         $this->logChannel = 'persons_logs';
     }
 
-   public function personListing($request)
- {
+
+  public function personListing($request)
+{
     try {
-
-      $user = auth('api')->user();
-
+        $user = auth('api')->user();
 
         if (!$user) {
             return ResponseHandler::error('Unauthorized user.', 401);
         }
 
-        $query = $user->persons()->with(['relative', 'interests', 'occasions.occasionName']);
+        $filters = $request->input('filters', []);
 
-        if ($filters = $request->input('filters')) {
-            foreach ($filters as $field => $value) {
-                if (in_array($field, ['name', 'gender', 'city'])) {
-                    $query->where($field, 'LIKE', "%{$value}%");
+        $query = $user->persons()->with([
+            'relative',
+            'interests',
+            'avatar',
+            // ✅ تحميل المناسبات بشرط ذكي
+            'occasions' => function ($q) use ($filters) {
+                $q->with('occasionName');
+
+                if (!empty($filters['occasion_title'])) {
+                    $q->where('title', 'LIKE', "%{$filters['occasion_title']}%");
                 }
+
+                if (!empty($filters['occasion_name_id'])) {
+                    $q->where('occasion_name_id', $filters['occasion_name_id']);
+                }
+            }
+        ]);
+
+        // ✅ فلترة الأشخاص
+        foreach ($filters as $field => $value) {
+            if (empty($value) || trim($value) === '') continue;
+
+            switch ($field) {
+                case 'name':
+                case 'city':
+                    $query->where($field, 'LIKE', "%{$value}%");
+                    break;
+
+                case 'gender':
+                    $query->where('gender', $value);
+                    break;
+
+                case 'relative_id':
+                    $query->where('relative_id', $value);
+                    break;
+
+                case 'interest_id':
+                    $query->whereHas('interests', function ($q) use ($value) {
+                        $q->where('interests.id', $value);
+                    });
+                    break;
+
+                case 'occasion_title':
+                    $query->whereHas('occasions', function ($q) use ($value) {
+                        $q->where('title', 'LIKE', "%{$value}%");
+                    });
+                    break;
+
+                case 'occasion_name_id':
+                    $query->whereHas('occasions', function ($q) use ($value) {
+                        $q->where('occasion_name_id', $value);
+                    });
+                    break;
             }
         }
 
-        // ✅ الترتيب
+        // ✅ ترتيب النتيجة
         $orderBy = $request->input('order_by', 'id');
         $order = $request->input('order', 'desc');
         $query->orderBy($orderBy, $order);
 
-        // ✅ إلغاء الـ paginate — هيرجع أول 5 فقط
-        $persons = $query->limit(5)->get();
+        // ✅ عدد النتائج
+        $rpp = $request->input('rpp', 10);
+        $paginate = $request->boolean('paginate', false);
 
-       // ✅ الرد النهائي
+        $persons = $paginate
+            ? $query->paginate($rpp)
+            : $query->limit($rpp)->get();
+
         return response()->json([
             'status' => 200,
-            'code' => 8200,
+            'code'   => 8200,
             'message' => __('common.success'),
-            'allPersons' => $persons
+            'allPersons' => $persons,
         ], 200);
-
 
     } catch (\Exception $e) {
         $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
@@ -63,25 +113,31 @@ class PeopleRepository extends BaseRepository
 }
 
 
-
-public function createPerson(array $validatedRequest)
+        public function createPerson(array $validatedRequest)
 {
     try {
-        // ✅ إنشاء الشخص
+        // ✅ إنشاء الشخص الجديد
         $person = $this->model::create([
             'name'          => $validatedRequest['name'],
             'relative_id'   => $validatedRequest['relative_id'] ?? null,
             'user_id'       => auth('api')->id(),
+            'avatar_id'     => $validatedRequest['avatar_id'] ?? null, // 🔹 دعم الـAvatar
+            'pic'           => $validatedRequest['pic'] ?? null,       // 🔹 الصورة المرفوعة أو Base64 أو URL
+            'birthday_date' => $validatedRequest['birthday_date'] ?? null,
+            'gender'        => $validatedRequest['gender'] ?? null,
+            'region'        => $validatedRequest['region'] ?? null,
+            'city'          => $validatedRequest['city'] ?? null,
+            'address'       => $validatedRequest['address'] ?? null,
         ]);
 
-        // ✅ إنشاء المناسبات المتعددة
+        // ✅ إنشاء المناسبات لو موجودة
         if (!empty($validatedRequest['occasions']) && is_array($validatedRequest['occasions'])) {
             foreach ($validatedRequest['occasions'] as $occ) {
                 $person->occasions()->create([
                     'occasion_name_id' => $occ['occasion_name_id'],
-                    'title' => $occ['title'] ?? 'Occasion for ' . $person->name,
-                    'date'  => $occ['date'] ?? null,
-                    'type'  => optional(\App\Models\OccasionName::find($occ['occasion_name_id']))->type,
+                    'title'            => $occ['title'] ?? 'Occasion for ' . $person->name,
+                    'date'             => $occ['date'] ?? null,
+                    'type'             => optional(\App\Models\OccasionName::find($occ['occasion_name_id']))->type,
                 ]);
             }
         }
@@ -90,101 +146,150 @@ public function createPerson(array $validatedRequest)
         if (!empty($validatedRequest['interests']) && is_array($validatedRequest['interests'])) {
             $person->interests()->sync($validatedRequest['interests']);
         }
+        // ✅ إضافة المرفقات
+        if (!empty($validatedRequest['attachments']) && is_array($validatedRequest['attachments'])) {
+              foreach ($validatedRequest['attachments'] as $attach) {
+                    $person->attachments()->create([
+                         'file'          => $attach['file'] ?? null,
+                         'product_name'  => $attach['product_name'] ?? null,
+                         'product_brand' => $attach['product_brand'] ?? null,
+                         'price'         => $attach['price'] ?? null,
+                         'store_name'    => $attach['store_name'] ?? null,
+                         'note'          => $attach['note'] ?? null,
+                            ]);
+                }
+        }
 
-        // ✅ إعادة الرد JSON
-    return response()->json([
-    'status' => 200,
-    'code' => 8200,
-    'message' => __('common.success'),
-    'addPerson' => $person->load(['relative', 'interests', 'occasions.occasionName']),
-]);
+        // ✅ تحميل العلاقات المطلوبة للعرض
+        $person->load(['avatar', 'attachments','relative', 'interests', 'occasions.occasionName']);
 
+        // ✅ الرد النهائي
+        return response()->json([
+            'status'     => 200,
+            'code'       => 8200,
+            'message'    => __('common.success'),
+            'addPerson'  => $person,
+        ]);
 
     } catch (\Exception $e) {
         $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
-        return ResponseHandler::error(
-            $this->prepareExceptionLog($e),
-            500,
-            26
-        );
+        return ResponseHandler::error($this->prepareExceptionLog($e), 500, 26);
     }
 }
 
-
-
-    public function showPerson(array $validatedRequest)
-    {
-        try {
-            $person = $this->model::with(['relative','interests'])->find($validatedRequest['id']);
-            if (!$person) {
-                return ResponseHandler::error(__('common.not_found'), 404, 2005);
-            }
-            return ResponseHandler::success($person, __('common.success'));
-        } catch (\Exception $e) {
-            $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
-            return ResponseHandler::error($this->prepareExceptionLog($e), 500, 26);
-        }
-    }
-
-
-    public function updatePerson(array $validatedRequest)
+public function showPerson(array $validatedRequest)
 {
     try {
-        // ✅ البحث عن الشخص
-        $person = $this->model::find($validatedRequest['id']);
+        // ✅ تحميل كل العلاقات المهمة للشخص
+        $person = $this->model::with([
+            'relative',
+            'interests',
+            'avatar',
+            'attachments',
+            'occasions.occasionName'
+        ])->find($validatedRequest['id']);
+
+        // ✅ التحقق من وجود الشخص
         if (!$person) {
-            return ResponseHandler::error(__('common.not_found'), 404, 2009);
+            return ResponseHandler::error(__('common.not_found'), 404, 2005);
         }
 
-        // ✅ تحديث بيانات الشخص الأساسية
-        $person->update([
-            'name'          => $validatedRequest['name'] ?? $person->name,
-            'birthday_date' => $validatedRequest['birthday_date'] ?? $person->birthday_date,
-            'gender'        => $validatedRequest['gender'] ?? $person->gender,
-            'region'        => $validatedRequest['region'] ?? $person->region,
-            'city'          => $validatedRequest['city'] ?? $person->city,
-            'address'       => $validatedRequest['address'] ?? $person->address,
-            'relative_id'   => $validatedRequest['relative_id'] ?? $person->relative_id,
-        ]);
-
-        // ✅ تحديث الاهتمامات
-        if (isset($validatedRequest['interests'])) {
-            $person->interests()->sync($validatedRequest['interests']);
-        }
-
-        // ✅ تحديث المناسبات (occasions)
-        if (isset($validatedRequest['occasions']) && is_array($validatedRequest['occasions'])) {
-            foreach ($validatedRequest['occasions'] as $occasionData) {
-                $person->occasions()->updateOrCreate(
-                    [
-
-                        'occasion_name_id' => $occasionData['occasion_name_id'] ?? null,
-                    ],
-                    [
-                        'title'            => $occasionData['title'] ?? null,
-                        'date'             => $occasionData['date'] ?? null,
-                        'type'             => $occasionData['type'] ?? null,
-                    ]
-                );
-            }
-        }
-
-        // ✅ تحميل العلاقات المطلوبة
-        $person->load(['relative', 'interests', 'occasions.occasionName']);
-
-        // ✅ الرد النهائي بنفس تنسيق النظام عندك
+        // ✅ الرد بنفس شكل النظام الموحد
         return response()->json([
-            'status' => 200,
-            'code' => 8200,
+            'status'  => 200,
+            'code'    => 8200,
             'message' => __('common.success'),
-            'updatePerson' => $person,
+            'person'  => $person,
         ], 200);
 
     } catch (\Exception $e) {
         $this->logData($this->logChannel, $this->prepareExceptionLog($e), 'error');
         return ResponseHandler::error($this->prepareExceptionLog($e), 500, 26);
     }
- }
+}
+
+
+
+   public function updatePerson(array $validatedRequest)
+    {
+        try {
+            $person = $this->model::with(['attachments'])->find($validatedRequest['id']);
+            if (!$person) {
+                return ResponseHandler::error(__('common.not_found'), 404, 2009);
+            }
+
+            // ✅ تحديث بيانات الشخص الأساسية
+            $person->update([
+                'name'          => $validatedRequest['name']          ?? $person->name,
+                'avatar_id'     => $validatedRequest['avatar_id']     ?? $person->avatar_id,
+                'pic'           => $validatedRequest['pic']           ?? $person->pic,
+                'birthday_date' => $validatedRequest['birthday_date'] ?? $person->birthday_date,
+                'gender'        => $validatedRequest['gender']        ?? $person->gender,
+                'region'        => $validatedRequest['region']        ?? $person->region,
+                'city'          => $validatedRequest['city']          ?? $person->city,
+                'address'       => $validatedRequest['address']       ?? $person->address,
+                'relative_id'   => $validatedRequest['relative_id']   ?? $person->relative_id,
+            ]);
+
+            // ✅ تحديث الاهتمامات
+            if (isset($validatedRequest['interests'])) {
+                $person->interests()->sync($validatedRequest['interests']);
+            }
+
+            // ✅ تحديث المناسبات
+            if (isset($validatedRequest['occasions']) && is_array($validatedRequest['occasions'])) {
+                foreach ($validatedRequest['occasions'] as $occasionData) {
+                    $person->occasions()->updateOrCreate(
+                        ['occasion_name_id' => $occasionData['occasion_name_id'] ?? null],
+                        [
+                            'title' => $occasionData['title'] ?? null,
+                            'date'  => $occasionData['date'] ?? null,
+                            'type'  => $occasionData['type'] ?? null,
+                        ]
+                    );
+                }
+            }
+
+            // ✅ تحديث أو إضافة المرفقات
+            if (isset($validatedRequest['attachments']) && is_array($validatedRequest['attachments'])) {
+                $sentAttachmentIds = collect($validatedRequest['attachments'])
+                    ->pluck('id')
+                    ->filter()
+                    ->toArray();
+
+                $person->attachments()
+                    ->whereNotIn('id', $sentAttachmentIds)
+                    ->delete();
+
+                foreach ($validatedRequest['attachments'] as $attachData) {
+                    $person->attachments()->updateOrCreate(
+                        ['id' => $attachData['id'] ?? null],
+                        [
+                            'file'          => $attachData['file'] ?? null,
+                            'product_name'  => $attachData['product_name'] ?? null,
+                            'product_brand' => $attachData['product_brand'] ?? null,
+                            'price'         => $attachData['price'] ?? null,
+                            'store_name'    => $attachData['store_name'] ?? null,
+                            'note'          => $attachData['note'] ?? null,
+                        ]
+                    );
+                }
+            }
+
+            // ✅ تحميل العلاقات بعد التحديث
+            $person->load(['avatar', 'attachments', 'relative', 'interests', 'occasions.occasionName']);
+
+            return response()->json([
+                'status'  => 200,
+                'code'    => 8200,
+                'message' => __('common.success'),
+                'updatedPerson'    => $person,
+            ]);
+        } catch (Exception $e) {
+            return ResponseHandler::error($e->getMessage(), 500, 26);
+        }
+    }
+
 
 
 public function deletePerson(array $validatedRequest)

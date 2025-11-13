@@ -16,16 +16,25 @@
         </thead>
         <tbody class="divide-y divide-gray-200 text-sm text-gray-800">
             @foreach($runs as $run)
-            <tr>
-                <td class="py-3 px-4 font-mono">{{ $run->id }}</td>
-                <td class="py-3 px-4">{{ $run->feed->code }}</td>
-             <!--      <td class="py-3 px-4">{{ $run->created_at->diffForHumans() }}</td>      -->
-                <td class="py-3 px-4 text-right">
-                    <a href="/feeds/runs/{{ $run->id }}" class="text-indigo-600 hover:underline">
-                        View Details →
-                    </a>
-                </td>
-            </tr>
+           <tr>
+    <td class="py-3 px-4 font-mono">{{ $run->id }}</td>
+    <td class="py-3 px-4">{{ $run->feed->code }}</td>
+
+    <td class="py-3 px-4 text-right">
+        <a href="/feeds/runs/{{ $run->id }}" class="text-indigo-600 hover:underline">
+            View Details →
+        </a>
+    </td>
+
+    <td class="py-3 px-4 text-right">
+        <form action="/feeds/runs/{{ $run->id }}" method="POST" onsubmit="return confirm('Delete this run permanently?')">
+            @csrf
+            @method('DELETE')
+            <button class="text-red-600 hover:underline">Delete</button>
+        </form>
+    </td>
+</tr>
+
             @endforeach
         </tbody>
     </table>

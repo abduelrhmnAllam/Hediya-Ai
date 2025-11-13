@@ -50,4 +50,25 @@ public function show(FeedRun $run)
     return view('feeds.runs.show', compact('run','total_products','brands','categories'));
 }
 
+
+public function destroy(FeedRun $run)
+{
+    // امسح المنتجات المرتبطة
+    $run->items()->delete();
+
+    // لو فيه ملف محفوظ في meta احذفه كمان
+    if (!empty($run->file_name)) {
+        $pathPublic = public_path($run->file_name);
+        if (file_exists($pathPublic)) unlink($pathPublic);
+
+        $pathStorage = storage_path('app/' . $run->file_name);
+        if (file_exists($pathStorage)) unlink($pathStorage);
+    }
+
+    // حذف الـ FeedRun نفسه
+    $run->delete();
+
+    return redirect('/feeds/runs')->with('success', 'Feed Run deleted successfully!');
+}
+
 }
