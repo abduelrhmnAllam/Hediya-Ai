@@ -23,7 +23,7 @@ class AvatarController extends Controller
             'status'  => 200,
             'code'    => 8200,
             'message' => __('common.success'),
-            'data'    => $avatars,
+            'avatars'    => $avatars,
         ]);
     }
 }
